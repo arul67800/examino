@@ -34,6 +34,416 @@ import {
   ComputerDesktopIcon
 } from './sidebar-icons';
 
+// Admin Navigation Menu
+export const getAdminNavigationMenu = (): MenuItem[] => [
+  {
+    id: 'admin-dashboard',
+    name: 'Admin Dashboard',
+    icon: <DashboardIcon />,
+    href: '/admin/dashboard',
+    level: 1,
+    isActive: true,
+    description: 'Admin dashboard overview'
+  },
+  {
+    id: 'user-management',
+    name: 'User Management',
+    icon: <UsersIcon />,
+    level: 1,
+    description: 'Manage platform users',
+    children: [
+      {
+        id: 'all-users',
+        name: 'All Users',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/users',
+        level: 2,
+        parentId: 'user-management',
+        description: 'View and manage all users'
+      },
+      {
+        id: 'user-roles',
+        name: 'Roles & Permissions',
+        icon: <LockIcon />,
+        href: '/admin/dashboard/users/roles',
+        level: 2,
+        parentId: 'user-management',
+        description: 'Manage user roles and permissions'
+      },
+      {
+        id: 'user-groups',
+        name: 'User Groups',
+        icon: <UserGroupIcon />,
+        href: '/admin/dashboard/users/groups',
+        level: 2,
+        parentId: 'user-management',
+        description: 'Organize users into groups'
+      }
+    ]
+  },
+  {
+    id: 'question-bank-manager',
+    name: 'Question Bank Manager',
+    icon: <DocumentTextIcon />,
+    level: 1,
+    badge: 'QBM',
+    description: 'Advanced question bank management',
+    children: [
+      {
+        id: 'qbm-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/qbm',
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Question bank overview and statistics'
+      },
+      {
+        id: 'qbm-hierarchy',
+        name: 'Hierarchy Management',
+        icon: <TagIcon />,
+        href: '/admin/dashboard/qbm/hierarchy',
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Manage question categories and hierarchy'
+      },
+      {
+        id: 'qbm-approval',
+        name: 'Content Approval',
+        icon: <CheckSquareIcon />,
+        level: 2,
+        parentId: 'question-bank-manager',
+        badge: 15,
+        description: 'Review and approve questions',
+        children: [
+          {
+            id: 'qbm-approval-pending',
+            name: 'Pending Review',
+            icon: '⏳',
+            href: '/admin/dashboard/qbm/approval/pending',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-approval',
+            badge: 12
+          },
+          {
+            id: 'qbm-approval-approved',
+            name: 'Approved Content',
+            icon: '✅',
+            href: '/admin/dashboard/qbm/approval/approved',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-approval'
+          },
+          {
+            id: 'qbm-approval-rejected',
+            name: 'Rejected Content',
+            icon: '❌',
+            href: '/admin/dashboard/qbm/approval/rejected',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-approval'
+          }
+        ]
+      },
+      {
+        id: 'qbm-bulk-operations',
+        name: 'Bulk Operations',
+        icon: <ArrowUpTrayIcon />,
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Bulk import/export operations',
+        children: [
+          {
+            id: 'qbm-bulk-import',
+            name: 'Bulk Import',
+            icon: '📥',
+            href: '/admin/dashboard/qbm/bulk/import',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-bulk-operations'
+          },
+          {
+            id: 'qbm-bulk-export',
+            name: 'Bulk Export',
+            icon: '📤',
+            href: '/admin/dashboard/qbm/bulk/export',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-bulk-operations'
+          },
+          {
+            id: 'qbm-bulk-update',
+            name: 'Bulk Update',
+            icon: '🔄',
+            href: '/admin/dashboard/qbm/bulk/update',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-bulk-operations'
+          },
+          {
+            id: 'qbm-bulk-delete',
+            name: 'Bulk Delete',
+            icon: '🗑️',
+            href: '/admin/dashboard/qbm/bulk/delete',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-bulk-operations'
+          }
+        ]
+      },
+      {
+        id: 'qbm-quality-control',
+        name: 'Quality Control',
+        icon: <TargetIcon />,
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Quality assurance and validation',
+        children: [
+          {
+            id: 'qbm-quality-validation',
+            name: 'Content Validation',
+            icon: '🔍',
+            href: '/admin/dashboard/qbm/quality/validation',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-quality-control'
+          },
+          {
+            id: 'qbm-quality-duplicates',
+            name: 'Duplicate Detection',
+            icon: '👯',
+            href: '/admin/dashboard/qbm/quality/duplicates',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-quality-control'
+          },
+          {
+            id: 'qbm-quality-reports',
+            name: 'Quality Reports',
+            icon: '📋',
+            href: '/admin/dashboard/qbm/quality/reports',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-quality-control'
+          },
+          {
+            id: 'qbm-quality-metrics',
+            name: 'Quality Metrics',
+            icon: <ChartBarIcon />,
+            href: '/admin/dashboard/qbm/quality/metrics',
+            level: 3,
+            parentId: 'question-bank-manager',
+            subParentId: 'qbm-quality-control'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'system-analytics',
+    name: 'System Analytics',
+    icon: <ChartBarIcon />,
+    level: 1,
+    description: 'System-wide analytics and insights',
+    children: [
+      {
+        id: 'system-overview',
+        name: 'System Overview',
+        icon: <TrendingUpIcon />,
+        href: '/admin/dashboard/analytics',
+        level: 2,
+        parentId: 'system-analytics',
+        description: 'Overall system metrics'
+      },
+      {
+        id: 'usage-statistics',
+        name: 'Usage Statistics',
+        icon: <ChartBarIcon />,
+        href: '/admin/dashboard/analytics/usage',
+        level: 2,
+        parentId: 'system-analytics',
+        description: 'Platform usage statistics'
+      },
+      {
+        id: 'performance-metrics',
+        name: 'Performance Metrics',
+        icon: <TargetIcon />,
+        href: '/admin/dashboard/analytics/performance',
+        level: 2,
+        parentId: 'system-analytics',
+        description: 'System performance monitoring'
+      }
+    ]
+  },
+  {
+    id: 'content-moderation',
+    name: 'Content Moderation',
+    icon: '🛡️',
+    level: 1,
+    badge: 8,
+    description: 'Moderate and review platform content',
+    children: [
+      {
+        id: 'pending-reviews',
+        name: 'Pending Reviews',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/moderation',
+        level: 2,
+        parentId: 'content-moderation',
+        badge: 8,
+        description: 'Content awaiting review'
+      },
+      {
+        id: 'flagged-content',
+        name: 'Flagged Content',
+        icon: '🚩',
+        href: '/admin/dashboard/moderation/flagged',
+        level: 2,
+        parentId: 'content-moderation',
+        description: 'User-reported content'
+      },
+      {
+        id: 'moderation-settings',
+        name: 'Moderation Settings',
+        icon: <CogIcon />,
+        href: '/admin/dashboard/moderation/settings',
+        level: 2,
+        parentId: 'content-moderation',
+        description: 'Configure moderation rules'
+      }
+    ]
+  },
+  {
+    id: 'reports',
+    name: 'Reports',
+    icon: '📋',
+    level: 1,
+    description: 'Generate and manage reports',
+    children: [
+      {
+        id: 'system-reports',
+        name: 'System Reports',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/reports',
+        level: 2,
+        parentId: 'reports',
+        description: 'System-wide reports'
+      },
+      {
+        id: 'user-reports',
+        name: 'User Reports',
+        icon: <UsersIcon />,
+        href: '/admin/dashboard/reports/users',
+        level: 2,
+        parentId: 'reports',
+        description: 'User activity reports'
+      },
+      {
+        id: 'custom-reports',
+        name: 'Custom Reports',
+        icon: <WrenchIcon />,
+        href: '/admin/dashboard/reports/custom',
+        level: 2,
+        parentId: 'reports',
+        description: 'Create custom reports'
+      }
+    ]
+  },
+  {
+    id: 'system-settings',
+    name: 'System Settings',
+    icon: <CogIcon />,
+    level: 1,
+    description: 'System configuration and preferences',
+    children: [
+      {
+        id: 'general-settings',
+        name: 'General Settings',
+        icon: <WrenchIcon />,
+        href: '/admin/dashboard/settings',
+        level: 2,
+        parentId: 'system-settings',
+        description: 'General system settings'
+      },
+      {
+        id: 'security-settings',
+        name: 'Security Settings',
+        icon: <LockIcon />,
+        href: '/admin/dashboard/settings/security',
+        level: 2,
+        parentId: 'system-settings',
+        description: 'System security configuration'
+      },
+      {
+        id: 'notification-settings',
+        name: 'Notifications',
+        icon: <BellIcon />,
+        href: '/admin/dashboard/settings/notifications',
+        level: 2,
+        parentId: 'system-settings',
+        description: 'System notification settings'
+      },
+      {
+        id: 'backup-settings',
+        name: 'Backup & Recovery',
+        icon: '💾',
+        href: '/admin/dashboard/settings/backup',
+        level: 2,
+        parentId: 'system-settings',
+        description: 'Data backup and recovery'
+      }
+    ]
+  },
+  {
+    id: 'logs-monitoring',
+    name: 'Logs & Monitoring',
+    icon: '📄',
+    level: 1,
+    description: 'System logs and monitoring',
+    children: [
+      {
+        id: 'system-logs',
+        name: 'System Logs',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/logs',
+        level: 2,
+        parentId: 'logs-monitoring',
+        description: 'View system logs'
+      },
+      {
+        id: 'error-logs',
+        name: 'Error Logs',
+        icon: '⚠️',
+        href: '/admin/dashboard/logs/errors',
+        level: 2,
+        parentId: 'logs-monitoring',
+        badge: 3,
+        description: 'System error logs'
+      },
+      {
+        id: 'audit-logs',
+        name: 'Audit Logs',
+        icon: '🔍',
+        href: '/admin/dashboard/logs/audit',
+        level: 2,
+        parentId: 'logs-monitoring',
+        description: 'User activity audit logs'
+      },
+      {
+        id: 'monitoring-dashboard',
+        name: 'Monitoring Dashboard',
+        icon: <ChartBarIcon />,
+        href: '/admin/dashboard/monitoring',
+        level: 2,
+        parentId: 'logs-monitoring',
+        description: 'Real-time system monitoring'
+      }
+    ]
+  }
+];
+
+// Regular User Navigation Menu
 export const getNavigationMenu = (): MenuItem[] => [
   {
     id: 'dashboard',

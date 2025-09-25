@@ -42,6 +42,7 @@ export interface SidebarState {
 export interface SidebarProps {
   className?: string;
   defaultCollapsed?: boolean;
+  isAdmin?: boolean;
   onItemClick?: (item: NavigationItem) => void;
   onToggleCollapse?: (collapsed: boolean) => void;
 }

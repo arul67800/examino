@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { UserResolver } from './user.resolver';
 import { PostResolver } from './post.resolver';
+import { HierarchyModule } from './hierarchy';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PostResolver } from './post.resolver';
       playground: true,
       introspection: true,
     }),
+    HierarchyModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, UserResolver, PostResolver],

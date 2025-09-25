@@ -1,0 +1,108 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateHierarchyItemInput {
+  color: String
+  level: Float!
+  name: String!
+  parentId: String
+  questionCount: Float! = 0
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type HierarchyItem {
+  children: [HierarchyItem!]!
+  color: String
+  createdAt: DateTime!
+  id: ID!
+  level: Int!
+  name: String!
+  order: Int!
+  parent: HierarchyItem
+  parentId: ID
+  questionCount: Int!
+  type: String!
+  updatedAt: DateTime!
+}
+
+type HierarchyStats {
+  count: Int!
+  level: Int!
+  totalQuestions: Int!
+  type: String!
+}
+
+type Mutation {
+  """Create a new hierarchy item"""
+  createHierarchyItem(input: CreateHierarchyItemInput!): HierarchyItem!
+  createPost(authorId: String!, content: String, title: String!): Post!
+  createUser(email: String!, name: String): User!
+
+  """Delete a hierarchy item (only if it has no children)"""
+  deleteHierarchyItem(id: ID!): Boolean!
+
+  """Reorder multiple hierarchy items"""
+  reorderHierarchyItems(items: [ReorderHierarchyItemInput!]!): [HierarchyItem!]!
+
+  """Update an existing hierarchy item"""
+  updateHierarchyItem(id: ID!, input: UpdateHierarchyItemInput!): HierarchyItem!
+
+  """Update the question count for a chapter (level 5 only)"""
+  updateQuestionCount(count: Float!, id: ID!): HierarchyItem!
+}
+
+type Post {
+  authorId: ID!
+  content: String
+  createdAt: DateTime!
+  id: ID!
+  published: Boolean!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type Query {
+  """Get a specific hierarchy item by ID"""
+  hierarchyItem(id: ID!): HierarchyItem
+
+  """Get all hierarchy items with nested children"""
+  hierarchyItems: [HierarchyItem!]!
+
+  """Get all hierarchy items at a specific level"""
+  hierarchyItemsByLevel(level: Float!): [HierarchyItem!]!
+
+  """Get all direct children of a parent hierarchy item"""
+  hierarchyItemsByParent(parentId: ID!): [HierarchyItem!]!
+
+  """Get statistics about the hierarchy structure"""
+  hierarchyStats: [HierarchyStats!]!
+  post(id: String!): Post
+  posts: [Post!]!
+  user(id: String!): User
+  users: [User!]!
+}
+
+input ReorderHierarchyItemInput {
+  id: String!
+  order: Float!
+}
+
+input UpdateHierarchyItemInput {
+  color: String
+  name: String
+  order: Float
+  questionCount: Float
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  name: String
+  updatedAt: DateTime!
+}

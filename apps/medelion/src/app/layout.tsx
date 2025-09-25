@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/theme";
+import { ApolloClientProvider } from "@/lib/apollo-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,15 +29,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          defaultColorName="green"
-          defaultMode="black"
-          defaultDirection="ltr"
-          enableSystemModeDetection={false}
-          enableDirectionDetection={false}
-        >
-          {children}
-        </ThemeProvider>
+        <ApolloClientProvider>
+          <ThemeProvider
+            defaultColorName="green"
+            defaultMode="black"
+            defaultDirection="ltr"
+            enableSystemModeDetection={false}
+            enableDirectionDetection={false}
+          >
+            {children}
+          </ThemeProvider>
+        </ApolloClientProvider>
       </body>
     </html>
   );

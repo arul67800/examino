@@ -155,6 +155,86 @@ export const SETTINGS_ROUTES = {
   },
 } as const;
 
+// Admin routes
+export const ADMIN_ROUTES = {
+  ROOT: '/admin',
+  DASHBOARD: '/admin/dashboard',
+  USERS: {
+    ROOT: '/admin/dashboard/users',
+    LIST: '/admin/dashboard/users',
+    CREATE: '/admin/dashboard/users/create',
+    EDIT: (id: string) => `/admin/dashboard/users/edit/${id}`,
+    VIEW: (id: string) => `/admin/dashboard/users/view/${id}`,
+    ROLES: '/admin/dashboard/users/roles',
+    GROUPS: '/admin/dashboard/users/groups',
+  },
+  QBM: {
+    ROOT: '/admin/dashboard/qbm',
+    OVERVIEW: '/admin/dashboard/qbm',
+    HIERARCHY: '/admin/dashboard/qbm/hierarchy',
+    CATEGORIES: {
+      ROOT: '/admin/dashboard/qbm/categories',
+      LIST: '/admin/dashboard/qbm/categories',
+      CREATE: '/admin/dashboard/qbm/categories/create',
+      EDIT: (id: string) => `/admin/dashboard/qbm/categories/edit/${id}`,
+      MANAGE: '/admin/dashboard/qbm/categories/manage',
+    },
+    APPROVAL: {
+      ROOT: '/admin/dashboard/qbm/approval',
+      PENDING: '/admin/dashboard/qbm/approval/pending',
+      APPROVED: '/admin/dashboard/qbm/approval/approved',
+      REJECTED: '/admin/dashboard/qbm/approval/rejected',
+      REVIEW: (id: string) => `/admin/dashboard/qbm/approval/review/${id}`,
+    },
+    BULK: {
+      ROOT: '/admin/dashboard/qbm/bulk',
+      IMPORT: '/admin/dashboard/qbm/bulk/import',
+      EXPORT: '/admin/dashboard/qbm/bulk/export',
+      DELETE: '/admin/dashboard/qbm/bulk/delete',
+      UPDATE: '/admin/dashboard/qbm/bulk/update',
+    },
+    QUALITY: {
+      ROOT: '/admin/dashboard/qbm/quality',
+      VALIDATION: '/admin/dashboard/qbm/quality/validation',
+      DUPLICATES: '/admin/dashboard/qbm/quality/duplicates',
+      REPORTS: '/admin/dashboard/qbm/quality/reports',
+      METRICS: '/admin/dashboard/qbm/quality/metrics',
+    },
+  },
+  ANALYTICS: {
+    ROOT: '/admin/dashboard/analytics',
+    SYSTEM: '/admin/dashboard/analytics/system',
+    USAGE: '/admin/dashboard/analytics/usage',
+    PERFORMANCE: '/admin/dashboard/analytics/performance',
+  },
+  MODERATION: {
+    ROOT: '/admin/dashboard/moderation',
+    PENDING: '/admin/dashboard/moderation/pending',
+    FLAGGED: '/admin/dashboard/moderation/flagged',
+    SETTINGS: '/admin/dashboard/moderation/settings',
+  },
+  REPORTS: {
+    ROOT: '/admin/dashboard/reports',
+    SYSTEM: '/admin/dashboard/reports/system',
+    USERS: '/admin/dashboard/reports/users',
+    CUSTOM: '/admin/dashboard/reports/custom',
+  },
+  SETTINGS: {
+    ROOT: '/admin/dashboard/settings',
+    GENERAL: '/admin/dashboard/settings/general',
+    SECURITY: '/admin/dashboard/settings/security',
+    NOTIFICATIONS: '/admin/dashboard/settings/notifications',
+    BACKUP: '/admin/dashboard/settings/backup',
+  },
+  LOGS: {
+    ROOT: '/admin/dashboard/logs',
+    SYSTEM: '/admin/dashboard/logs/system',
+    ERRORS: '/admin/dashboard/logs/errors',
+    AUDIT: '/admin/dashboard/logs/audit',
+  },
+  MONITORING: '/admin/dashboard/monitoring',
+} as const;
+
 // Authentication routes
 export const AUTH_ROUTES = {
   LOGIN: '/auth/login',
@@ -186,6 +266,7 @@ export const ROUTES = {
   STUDENTS: STUDENT_ROUTES,
   ANALYTICS: ANALYTICS_ROUTES,
   SETTINGS: SETTINGS_ROUTES,
+  ADMIN: ADMIN_ROUTES,
 } as const;
 
 // Route definitions with metadata for navigation

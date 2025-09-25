@@ -1,10 +1,6 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { PrismaService } from './prisma.service';
-import { Post } from './generated/graphql/post/post.model';
-import { CreateOnePostArgs } from './generated/graphql/post/create-one-post.args';
-import { FindUniquePostArgs } from './generated/graphql/post/find-unique-post.args';
-import { UpdateOnePostArgs } from './generated/graphql/post/update-one-post.args';
-import { DeleteOnePostArgs } from './generated/graphql/post/delete-one-post.args';
+import { Post } from './models';
 
 @Resolver(() => Post)
 export class PostResolver {
@@ -12,51 +8,24 @@ export class PostResolver {
 
   @Query(() => [Post], { name: 'posts' })
   findAll() {
-    return this.prisma.post.findMany({
-      include: {
-        author: true,
-      },
-    });
+    return this.prisma.post.findMany();
   }
 
   @Query(() => Post, { name: 'post', nullable: true })
-  findOne(@Args() args: FindUniquePostArgs) {
+  findOne(@Args('id') id: string) {
     return this.prisma.post.findUnique({
-      where: args.where,
-      include: {
-        author: true,
-      },
+      where: { id }
     });
   }
 
   @Mutation(() => Post)
-  createPost(@Args() args: CreateOnePostArgs) {
+  createPost(
+    @Args('title') title: string,
+    @Args('content', { nullable: true }) content: string,
+    @Args('authorId') authorId: string
+  ) {
     return this.prisma.post.create({
-      data: args.data,
-      include: {
-        author: true,
-      },
-    });
-  }
-
-  @Mutation(() => Post, { nullable: true })
-  updatePost(@Args() args: UpdateOnePostArgs) {
-    return this.prisma.post.update({
-      where: args.where,
-      data: args.data,
-      include: {
-        author: true,
-      },
-    });
-  }
-
-  @Mutation(() => Post, { nullable: true })
-  deletePost(@Args() args: DeleteOnePostArgs) {
-    return this.prisma.post.delete({
-      where: args.where,
-      include: {
-        author: true,
-      },
+      data: { title, content, authorId }
     });
   }
 }

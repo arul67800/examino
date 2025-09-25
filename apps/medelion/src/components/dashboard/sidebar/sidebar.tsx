@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from '@/theme';
 import { 
   MenuItem, 
@@ -12,7 +12,7 @@ import {
   NavigationItem,
   MenuItemProps 
 } from './sidebar-types';
-import { getNavigationMenu, defaultUserProfile, animationConfig } from './sidebar-menu';
+import { getNavigationMenu, getAdminNavigationMenu, defaultUserProfile, animationConfig } from './sidebar-menu';
 import { SidebarUtils } from '../../../routes/server-utils';
 
 // Individual Menu Item Component with animations
@@ -46,12 +46,23 @@ const MenuItemComponent = ({
           backgroundColor: isActive ? theme.colors.semantic.surface.tertiary : 'transparent',
           color: isActive ? theme.colors.semantic.text.primary : theme.colors.semantic.text.secondary
         }}
-        onClick={() => {
-          if (hasChildren) {
-            onToggle(item.id);
-          } else {
+        onClick={(e) => {
+          // If item has href, navigate but don't toggle parent expansion
+          if ('href' in item && item.href) {
             onClick(item);
+            // Don't prevent default or stop propagation for navigation items
+            return;
           }
+          
+          // If item has children but no href, toggle expansion
+          if (hasChildren) {
+            e.preventDefault(); // Prevent navigation for parent items
+            onToggle(item.id);
+            return;
+          }
+          
+          // Handle other clicks
+          onClick(item);
         }}
         onMouseEnter={() => onHover(item.id)}
         onMouseLeave={() => onHover(null)}
@@ -234,16 +245,21 @@ const MenuRenderer = ({
 export function Sidebar({
   className = '',
   defaultCollapsed = false,
+  isAdmin = false,
   onItemClick,
   onToggleCollapse
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme } = useTheme();
   
   // Memoize navigationMenu to prevent recreating it on every render
-  const navigationMenu = useMemo(() => getNavigationMenu(), []);
+  const navigationMenu = useMemo(() => 
+    isAdmin ? getAdminNavigationMenu() : getNavigationMenu(), 
+    [isAdmin]
+  );
   
-  // Initialize state based on current route
+  // Initialize state based on current route (without localStorage to avoid hydration mismatch)
   const [state, setState] = useState<SidebarState>(() => {
     const activeItem = SidebarUtils.getActiveMenuItem(pathname, navigationMenu);
     const expandedItems = SidebarUtils.getExpandedItems(pathname, navigationMenu);
@@ -259,23 +275,43 @@ export function Sidebar({
   const sidebarRef = useRef<HTMLElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Restore expanded items from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    try {
+      const savedExpandedItems = localStorage.getItem('sidebar-expanded-items');
+      if (savedExpandedItems) {
+        const parsedItems = JSON.parse(savedExpandedItems);
+        setState(prevState => {
+          const newExpandedItems = new Set(prevState.expandedItems);
+          parsedItems.forEach((item: string) => newExpandedItems.add(item));
+          return {
+            ...prevState,
+            expandedItems: newExpandedItems
+          };
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to restore sidebar state:', error);
+    }
+  }, []);
+
   // Update active item when pathname changes
   useEffect(() => {
     const activeItem = SidebarUtils.getActiveMenuItem(pathname, navigationMenu);
-    const expandedItems = SidebarUtils.getExpandedItems(pathname, navigationMenu);
+    const routeExpandedItems = SidebarUtils.getExpandedItems(pathname, navigationMenu);
     
     // Only update if there are actual changes
     setState(prev => {
       const hasActiveItemChanged = prev.activeItem !== activeItem;
-      const hasExpandedItemsChanged = 
-        prev.expandedItems.size !== expandedItems.size ||
-        ![...prev.expandedItems].every(item => expandedItems.has(item));
       
-      if (hasActiveItemChanged || hasExpandedItemsChanged) {
+      if (hasActiveItemChanged) {
+        // Merge route-based expanded items with manually expanded items
+        const newExpandedItems = new Set([...prev.expandedItems, ...routeExpandedItems]);
+        
         return {
           ...prev,
           activeItem,
-          expandedItems
+          expandedItems: newExpandedItems
         };
       }
       
@@ -292,6 +328,16 @@ export function Sidebar({
       } else {
         newExpandedItems.add(itemId);
       }
+      
+      // Persist expanded items to localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('sidebar-expanded-items', JSON.stringify([...newExpandedItems]));
+        } catch (error) {
+          console.warn('Failed to save sidebar state:', error);
+        }
+      }
+      
       return {
         ...prev,
         expandedItems: newExpandedItems
@@ -318,11 +364,11 @@ export function Sidebar({
       onItemClick(item);
     }
 
-    // Navigate to href if available
+    // Navigate to href if available using Next.js router
     if ('href' in item && item.href) {
-      window.location.href = item.href;
+      router.push(item.href);
     }
-  }, [onItemClick]);
+  }, [onItemClick, router]);
 
   // Handle sidebar collapse toggle
   const handleCollapseToggle = useCallback(() => {
@@ -384,20 +430,20 @@ export function Sidebar({
             E
           </div>
           {!state.isCollapsed && (
-            <div className="flex flex-col">
-              <span 
-                className="text-xl font-bold"
-                style={{ color: theme.colors.semantic.text.primary }}
-              >
-                Examino
-              </span>
-              <span 
-                className="text-xs"
-                style={{ color: theme.colors.semantic.text.tertiary }}
-              >
-                Education Platform
-              </span>
-            </div>
+                      <div className="flex flex-col">
+            <span 
+              className="text-xl font-bold"
+              style={{ color: theme.colors.semantic.text.primary }}
+            >
+              {isAdmin ? 'Examino Admin' : 'Examino'}
+            </span>
+            <span 
+              className="text-xs"
+              style={{ color: theme.colors.semantic.text.tertiary }}
+            >
+              {isAdmin ? 'Administrator Panel' : 'Education Platform'}
+            </span>
+          </div>
           )}
         </div>
         
@@ -504,24 +550,26 @@ export function Sidebar({
                 className="text-sm font-medium truncate transition-colors"
                 style={{ color: theme.colors.semantic.text.primary }}
               >
-                {defaultUserProfile.name}
+                {isAdmin ? 'System Administrator' : defaultUserProfile.name}
               </p>
               <div className="flex items-center space-x-2">
                 <p 
                   className="text-xs truncate transition-colors"
                   style={{ color: theme.colors.semantic.text.tertiary }}
                 >
-                  {defaultUserProfile.email}
+                  {isAdmin ? 'admin@examino.com' : defaultUserProfile.email}
                 </p>
-                {defaultUserProfile.role && (
+                {(isAdmin || defaultUserProfile.role) && (
                   <span 
                     className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
                     style={{ 
-                      backgroundColor: theme.colors.semantic.action.secondary,
+                      backgroundColor: isAdmin 
+                        ? theme.colors.semantic.status.error 
+                        : theme.colors.semantic.action.secondary,
                       color: theme.colors.semantic.text.primary
                     }}
                   >
-                    {defaultUserProfile.role}
+                    {isAdmin ? 'Admin' : defaultUserProfile.role}
                   </span>
                 )}
               </div>

@@ -6,12 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
-}
-
-generator nestgraphql {
-  provider = "prisma-nestjs-graphql"
-  output   = "../src/generated/graphql"
 }
 
 datasource db {
@@ -41,4 +35,27 @@ model Post {
   updatedAt DateTime @updatedAt
 
   @@map("posts")
+}
+
+// Academic Hierarchy Models
+model HierarchyItem {
+  id          String   @id @default(cuid())
+  name        String
+  level       Int      // 1=Year, 2=Subject, 3=Part, 4=Section, 5=Chapter
+  type        String   // Year/Subject/Part/Section/Chapter
+  color       String?  // Optional color for UI
+  order       Int      @default(0) // For ordering items at same level
+  
+  // Self-referencing hierarchy
+  parentId    String?
+  parent      HierarchyItem? @relation("HierarchyParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children    HierarchyItem[] @relation("HierarchyParent")
+  
+  // Question count for chapters (level 5)
+  questionCount Int @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hierarchy_items")
 }

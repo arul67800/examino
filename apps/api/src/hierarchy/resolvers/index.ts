@@ -1,0 +1,1 @@
+export { HierarchyResolver } from './hierarchy.resolver';
