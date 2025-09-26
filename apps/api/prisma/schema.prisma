@@ -54,8 +54,77 @@ model HierarchyItem {
   // Question count for chapters (level 5)
   questionCount Int @default(0)
   
+  // Questions relationship
+  questions   Question[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("hierarchy_items")
+}
+
+// MCQ/Question Models
+model Question {
+  id            String      @id @default(cuid())
+  humanId       String      @unique // Human-readable ID like "ANAT-UL-SR-BSA-Q001"
+  type          QuestionType
+  question      String      // Question text (can contain HTML from rich editor)
+  explanation   String?     // Explanation text (can contain HTML)
+  difficulty    Difficulty  @default(MEDIUM)
+  points        Int         @default(1)
+  timeLimit     Int?        // Time limit in seconds
+  tags          String?     // JSON string of tags array
+  
+  // Hierarchy relationship
+  hierarchyItemId String
+  hierarchyItem   HierarchyItem @relation(fields: [hierarchyItemId], references: [id], onDelete: Cascade)
+  
+  // Question options
+  options       QuestionOption[]
+  
+  // Assertion-Reasoning specific fields
+  assertion     String?
+  reasoning     String?
+  
+  // Metadata
+  createdBy     String?     // User who created the question
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  isActive      Boolean     @default(true)
+  
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String    @id @default(cuid())
+  text        String    // Option text
+  isCorrect   Boolean   @default(false)
+  order       Int       @default(0) // Order of options
+  
+  // Relationship to question
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("question_options")
+}
+
+// Enums
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE  
+  TRUE_FALSE
+  ASSERTION_REASONING
+
+  @@map("question_type")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+
+  @@map("difficulty")
 }

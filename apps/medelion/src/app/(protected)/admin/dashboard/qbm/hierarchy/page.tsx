@@ -47,13 +47,32 @@ export default function HierarchyManagementPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState({
     mcqEditView: 'inline' as 'inline' | 'modal' | 'page',
-    showDeleteButton: false // Default to false - user needs to enable it
+    showDeleteButton: false, // Default to false - user needs to enable it
+    levelColors: {
+      1: '#8B5CF6', // Violet - Year
+      2: '#6366F1', // Indigo - Subject  
+      3: '#3B82F6', // Blue - Part
+      4: '#047857', // Dark Green - Section
+      5: '#10B981', // Light Green - Chapter
+    }
   });
 
   // Update local state when fetched data changes
   React.useEffect(() => {
-    setHierarchyItems(fetchedItems);
-  }, [fetchedItems]);
+    const updateItemColors = (items: any[]): any[] => {
+      return items.map(item => ({
+        ...item,
+        color: settings.levelColors[item.level as keyof typeof settings.levelColors] || '#6B7280',
+        children: item.children ? updateItemColors(item.children) : item.children
+      }));
+    };
+
+    if (fetchedItems.length > 0) {
+      setHierarchyItems(updateItemColors(fetchedItems));
+    } else {
+      setHierarchyItems(fetchedItems);
+    }
+  }, [fetchedItems, settings.levelColors]);
 
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => {
@@ -102,7 +121,7 @@ export default function HierarchyManagementPage() {
           name: newItemName.trim(),
           level,
           parentId: parentId === 'root' ? undefined : parentId,
-          color: getDefaultColorForLevel(level),
+          color: settings.levelColors[level as keyof typeof settings.levelColors] || '#6B7280',
           questionCount: 0
         });
         
@@ -397,14 +416,7 @@ export default function HierarchyManagementPage() {
   };
 
   const getDefaultColorForLevel = (level: number) => {
-    const colors = {
-      1: '#8B5CF6', // Purple for Year
-      2: '#7C3AED', // Deep Purple for Subject
-      3: '#10B981', // Teal for Part
-      4: '#059669', // Dark Teal for Section
-      5: '#047857', // Darker Teal for Chapter
-    };
-    return colors[level as keyof typeof colors] || '#6B7280';
+    return settings.levelColors[level as keyof typeof settings.levelColors] || '#6B7280';
   };
 
   const handleDragEnd = (activeId: string, overId: string) => {

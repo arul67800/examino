@@ -8,6 +8,7 @@ import { PrismaService } from './prisma.service';
 import { UserResolver } from './user.resolver';
 import { PostResolver } from './post.resolver';
 import { HierarchyModule } from './hierarchy';
+import { McqModule } from './mcq/mcq.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { HierarchyModule } from './hierarchy';
       introspection: true,
     }),
     HierarchyModule,
+    McqModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, UserResolver, PostResolver],

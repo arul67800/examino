@@ -10,6 +10,21 @@ input CreateHierarchyItemInput {
   questionCount: Float! = 0
 }
 
+input CreateQuestionInputGQL {
+  assertion: String
+  createdBy: String
+  difficulty: QuestionDifficulty = MEDIUM
+  explanation: String
+  hierarchyItemId: String!
+  options: [QuestionOptionInput!]
+  points: Float = 1
+  question: String!
+  reasoning: String
+  tags: [String!]
+  timeLimit: Float
+  type: QuestionType!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -41,19 +56,29 @@ type Mutation {
   """Create a new hierarchy item"""
   createHierarchyItem(input: CreateHierarchyItemInput!): HierarchyItem!
   createPost(authorId: String!, content: String, title: String!): Post!
+  createQuestion(input: CreateQuestionInputGQL!): QuestionResponse!
   createUser(email: String!, name: String): User!
 
   """Delete a hierarchy item (only if it has no children)"""
   deleteHierarchyItem(id: ID!): Boolean!
+  deleteQuestion(id: String!): Boolean!
 
   """Reorder multiple hierarchy items"""
   reorderHierarchyItems(items: [ReorderHierarchyItemInput!]!): [HierarchyItem!]!
 
   """Update an existing hierarchy item"""
   updateHierarchyItem(id: ID!, input: UpdateHierarchyItemInput!): HierarchyItem!
+  updateQuestion(id: String!, input: UpdateQuestionInputGQL!): QuestionResponse!
 
   """Update the question count for a chapter (level 5 only)"""
   updateQuestionCount(count: Float!, id: ID!): HierarchyItem!
+}
+
+type PaginatedQuestionsResponse {
+  page: Int!
+  pages: Int!
+  questions: [QuestionResponse!]!
+  total: Int!
 }
 
 type Post {
@@ -67,6 +92,10 @@ type Post {
 }
 
 type Query {
+  getQuestion(id: String!): QuestionResponse!
+  getQuestionByHumanId(humanId: String!): QuestionResponse!
+  getQuestionsByHierarchy(hierarchyItemId: String!, limit: Int! = 20, page: Int! = 1): PaginatedQuestionsResponse!
+
   """Get a specific hierarchy item by ID"""
   hierarchyItem(id: ID!): HierarchyItem
 
@@ -87,6 +116,56 @@ type Query {
   users: [User!]!
 }
 
+enum QuestionDifficulty {
+  EASY
+  HARD
+  MEDIUM
+}
+
+type QuestionOption {
+  createdAt: DateTime!
+  id: ID!
+  isCorrect: Boolean!
+  order: Float!
+  questionId: ID!
+  text: String!
+  updatedAt: DateTime!
+}
+
+input QuestionOptionInput {
+  id: String
+  isCorrect: Boolean!
+  order: Float
+  text: String!
+}
+
+type QuestionResponse {
+  assertion: String
+  createdAt: DateTime!
+  createdBy: String
+  difficulty: String!
+  explanation: String
+  hierarchyItemId: ID!
+  humanId: String!
+  id: ID!
+  isActive: Boolean!
+  options: [QuestionOption!]!
+  points: Float!
+  question: String!
+  reasoning: String
+  tags: [String!]!
+  timeLimit: Float
+  type: QuestionType!
+  updatedAt: DateTime!
+}
+
+enum QuestionType {
+  ASSERTION_REASONING
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+}
+
 input ReorderHierarchyItemInput {
   id: String!
   order: Float!
@@ -97,6 +176,19 @@ input UpdateHierarchyItemInput {
   name: String
   order: Float
   questionCount: Float
+}
+
+input UpdateQuestionInputGQL {
+  assertion: String
+  difficulty: QuestionDifficulty
+  explanation: String
+  options: [QuestionOptionInput!]
+  points: Float
+  question: String
+  reasoning: String
+  tags: [String!]
+  timeLimit: Float
+  type: QuestionType
 }
 
 type User {

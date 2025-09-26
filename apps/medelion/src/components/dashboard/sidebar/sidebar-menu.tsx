@@ -46,6 +46,14 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
     description: 'Admin dashboard overview'
   },
   {
+    id: 'student-dashboard',
+    name: 'Student Dashboard',
+    icon: <DashboardIcon />,
+    href: '/dashboard',
+    level: 1,
+    description: 'View student dashboard'
+  },
+  {
     id: 'user-management',
     name: 'User Management',
     icon: <UsersIcon />,
@@ -108,6 +116,15 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         description: 'Manage question categories and hierarchy'
       },
       {
+        id: 'mcq-editor',
+        name: 'MCQ Editor',
+        icon: <DocumentTextIcon />,
+        href: '/admin/dashboard/qbm/mcq',
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Create and edit multiple choice questions'
+      },
+      {
         id: 'qbm-approval',
         name: 'Content Approval',
         icon: <CheckSquareIcon />,
@@ -145,6 +162,15 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             subParentId: 'qbm-approval'
           }
         ]
+      },
+      {
+        id: 'qbm-question-bank',
+        name: 'Question Bank',
+        icon: <BookOpenIcon />,
+        href: '/admin/dashboard/qbm/question-bank',
+        level: 2,
+        parentId: 'question-bank-manager',
+        description: 'Browse and manage question collection'
       },
       {
         id: 'qbm-bulk-operations',
@@ -237,6 +263,245 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             subParentId: 'qbm-quality-control'
           }
         ]
+      }
+    ]
+  },
+  {
+    id: 'article-bank-manager',
+    name: 'Article Bank Manager',
+    icon: <BookOpenIcon />,
+    level: 1,
+    badge: 'ABM',
+    description: 'Manage educational articles and content',
+    children: [
+      {
+        id: 'abm-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/abm',
+        level: 2,
+        parentId: 'article-bank-manager',
+        description: 'Article bank overview and statistics'
+      },
+      {
+        id: 'abm-content',
+        name: 'Content Management',
+        icon: <DocumentTextIcon />,
+        href: '/admin/dashboard/abm/content',
+        level: 2,
+        parentId: 'article-bank-manager',
+        description: 'Create and manage articles'
+      },
+      {
+        id: 'abm-categories',
+        name: 'Categories',
+        icon: <TagIcon />,
+        href: '/admin/dashboard/abm/categories',
+        level: 2,
+        parentId: 'article-bank-manager',
+        description: 'Manage article categories'
+      }
+    ]
+  },
+  {
+    id: 'papers-manager',
+    name: 'Papers Manager',
+    icon: <DocumentDuplicateIcon />,
+    level: 1,
+    badge: 'PM',
+    description: 'Manage exam papers and test documents',
+    children: [
+      {
+        id: 'pm-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/pm',
+        level: 2,
+        parentId: 'papers-manager',
+        description: 'Papers overview and statistics'
+      },
+      {
+        id: 'pm-create',
+        name: 'Create Paper',
+        icon: <PlusIcon />,
+        href: '/admin/dashboard/pm/create',
+        level: 2,
+        parentId: 'papers-manager',
+        description: 'Create new exam papers'
+      },
+      {
+        id: 'pm-templates',
+        name: 'Paper Templates',
+        icon: <DocumentDuplicateIcon />,
+        href: '/admin/dashboard/pm/templates',
+        level: 2,
+        parentId: 'papers-manager',
+        description: 'Manage paper templates'
+      },
+      {
+        id: 'pm-schedule',
+        name: 'Schedule Papers',
+        icon: <CalendarIcon />,
+        href: '/admin/dashboard/pm/schedule',
+        level: 2,
+        parentId: 'papers-manager',
+        description: 'Schedule exam papers'
+      }
+    ]
+  },
+  {
+    id: 'learn-manager',
+    name: 'Learn Manager',
+    icon: <AcademicCapIcon />,
+    level: 1,
+    badge: 'LM',
+    description: 'Manage learning modules and courses',
+    children: [
+      {
+        id: 'lm-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/lm',
+        level: 2,
+        parentId: 'learn-manager',
+        description: 'Learning modules overview'
+      },
+      {
+        id: 'lm-courses',
+        name: 'Courses',
+        icon: <BookOpenIcon />,
+        href: '/admin/dashboard/lm/courses',
+        level: 2,
+        parentId: 'learn-manager',
+        description: 'Manage learning courses'
+      },
+      {
+        id: 'lm-modules',
+        name: 'Learning Modules',
+        icon: <BuildingIcon />,
+        href: '/admin/dashboard/lm/modules',
+        level: 2,
+        parentId: 'learn-manager',
+        description: 'Create and manage learning modules'
+      },
+      {
+        id: 'lm-progress',
+        name: 'Progress Tracking',
+        icon: <TrendingUpIcon />,
+        href: '/admin/dashboard/lm/progress',
+        level: 2,
+        parentId: 'learn-manager',
+        description: 'Track learning progress'
+      }
+    ]
+  },
+  {
+    id: 'test-manager',
+    name: 'Test Manager',
+    icon: <ClipboardListIcon />,
+    level: 1,
+    badge: 'TM',
+    description: 'Manage tests and assessments',
+    children: [
+      {
+        id: 'tm-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/tm',
+        level: 2,
+        parentId: 'test-manager',
+        description: 'Test management overview'
+      },
+      {
+        id: 'tm-create',
+        name: 'Create Test',
+        icon: <PlusIcon />,
+        href: '/admin/dashboard/tm/create',
+        level: 2,
+        parentId: 'test-manager',
+        description: 'Create new tests'
+      },
+      {
+        id: 'tm-bank',
+        name: 'Test Bank',
+        icon: <DocumentTextIcon />,
+        href: '/admin/dashboard/tm/bank',
+        level: 2,
+        parentId: 'test-manager',
+        description: 'Manage test repository'
+      },
+      {
+        id: 'tm-results',
+        name: 'Test Results',
+        icon: <ChartBarIcon />,
+        href: '/admin/dashboard/tm/results',
+        level: 2,
+        parentId: 'test-manager',
+        description: 'View and analyze test results'
+      },
+      {
+        id: 'tm-analytics',
+        name: 'Test Analytics',
+        icon: <TargetIcon />,
+        href: '/admin/dashboard/tm/analytics',
+        level: 2,
+        parentId: 'test-manager',
+        description: 'Detailed test analytics'
+      }
+    ]
+  },
+  {
+    id: 'editor-manager',
+    name: 'Text Editor Manager',
+    icon: <WrenchIcon />,
+    level: 1,
+    badge: 'TEM',
+    description: 'Manage text editors and editing tools',
+    children: [
+      {
+        id: 'em-overview',
+        name: 'Overview',
+        icon: <ClipboardListIcon />,
+        href: '/admin/dashboard/em',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Editor management overview'
+      },
+      {
+        id: 'em-editors',
+        name: 'Content Editors',
+        icon: <UsersIcon />,
+        href: '/admin/dashboard/em/editors',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Manage content editors'
+      },
+      {
+        id: 'em-permissions',
+        name: 'Editor Permissions',
+        icon: <LockIcon />,
+        href: '/admin/dashboard/em/permissions',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Manage editor permissions'
+      },
+      {
+        id: 'em-tools',
+        name: 'Editing Tools',
+        icon: <CogIcon />,
+        href: '/admin/dashboard/em/tools',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Configure editing tools'
+      },
+      {
+        id: 'em-workflow',
+        name: 'Editorial Workflow',
+        icon: <CheckSquareIcon />,
+        href: '/admin/dashboard/em/workflow',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Manage editorial workflow'
       }
     ]
   },
@@ -453,6 +718,14 @@ export const getNavigationMenu = (): MenuItem[] => [
     level: 1,
     isActive: true,
     description: 'Main dashboard overview'
+  },
+  {
+    id: 'admin-dashboard',
+    name: 'Admin Dashboard',
+    icon: <DashboardIcon />,
+    href: '/admin/dashboard',
+    level: 1,
+    description: 'Admin dashboard for testing purposes'
   },
   {
     id: 'question-bank',

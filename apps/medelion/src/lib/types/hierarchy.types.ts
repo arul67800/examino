@@ -40,7 +40,8 @@ export enum HierarchyLevel {
   SUBJECT = 2,
   PART = 3,
   SECTION = 4,
-  CHAPTER = 5
+  CHAPTER = 5,
+  MCQ = 6
 }
 
 export const getTypeByLevel = (level: number): string => {
@@ -50,6 +51,7 @@ export const getTypeByLevel = (level: number): string => {
     case 3: return 'Part';
     case 4: return 'Section';
     case 5: return 'Chapter';
+    case 6: return 'MCQ';
     default: return 'Item';
   }
 };

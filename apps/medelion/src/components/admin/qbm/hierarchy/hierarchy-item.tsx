@@ -197,7 +197,7 @@ export default function HierarchyItem({
           <div className="flex items-center space-x-2">
             {hasChildren && (
               <button 
-                className="text-sm font-medium transition-all duration-300 hover:scale-125 rounded-full w-5 h-5 flex items-center justify-center"
+                className="text-base font-medium transition-all duration-300 hover:scale-125 rounded-full w-7 h-7 flex items-center justify-center"
                 style={{ 
                   color: item.color,
                   backgroundColor: `${item.color}10`,
