@@ -1,19 +1,18 @@
 'use client';
 
 import React from 'react';
+import { ApolloProvider } from '@apollo/client/react';
 import apolloClient from './apollo-client';
-
-// Create a simple context to provide the Apollo client
-const ApolloContext = React.createContext(apolloClient);
 
 export function ApolloClientProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ApolloContext.Provider value={apolloClient}>
+    <ApolloProvider client={apolloClient}>
       {children}
-    </ApolloContext.Provider>
+    </ApolloProvider>
   );
 }
 
+// Keep the custom hook for backward compatibility if needed elsewhere
 export function useApollo() {
-  return React.useContext(ApolloContext);
+  return apolloClient;
 }

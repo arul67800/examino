@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/theme';
 import { mcqService, Question } from '@/lib/mcq-service';
-import MCQDatabaseEditor from '@/components/admin/qbm/mcq/editors/mcq-database-editor';
+import MCQDatabaseEditor from '@/components/admin/question-bank-manager/mcq/editors/mcq-database-editor';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function MCQDatabaseDemoPage() {

@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { useTheme } from '@/theme';
-import { RichTextEditor } from '@/components/admin/qbm/mcq/rich-text-editor/rich-text-editor';
-import { EnhancedRichTextEditor } from '@/components/admin/qbm/mcq/rich-text-editor/enhanced-rich-text-editor';
+import { RichTextEditor } from '@/components/admin/question-bank-manager/mcq/rich-text-editor/rich-text-editor';
+import { EnhancedRichTextEditor } from '@/components/admin/question-bank-manager/mcq/rich-text-editor/enhanced-rich-text-editor';
 import { SimpleEditor } from '@/lib/tiptap-exports';
 
 export default function RichTextEditorComparison() {

@@ -100,4 +100,30 @@ export class HierarchyResolver {
   ): Promise<HierarchyItem> {
     return this.hierarchyService.updateQuestionCount(id, count);
   }
+
+  @Mutation(() => HierarchyItem, {
+    description: 'Publish a hierarchy item to make it visible in the sidebar'
+  })
+  async publishHierarchyItem(
+    @Args('id', { type: () => ID }) id: string
+  ): Promise<HierarchyItem> {
+    return this.hierarchyService.publish(id);
+  }
+
+  @Mutation(() => HierarchyItem, {
+    description: 'Unpublish a hierarchy item to hide it from the sidebar'
+  })
+  async unpublishHierarchyItem(
+    @Args('id', { type: () => ID }) id: string
+  ): Promise<HierarchyItem> {
+    return this.hierarchyService.unpublish(id);
+  }
+
+  @Query(() => [HierarchyItem], { 
+    name: 'publishedHierarchyItems',
+    description: 'Get all published hierarchy items for sidebar display' 
+  })
+  async getPublishedHierarchyItems(): Promise<HierarchyItem[]> {
+    return this.hierarchyService.findPublished();
+  }
 }

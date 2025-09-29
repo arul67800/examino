@@ -43,6 +43,12 @@ export class QuestionOptionInput {
 
   @Field({ nullable: true })
   order?: number;
+
+  @Field({ nullable: true })
+  explanation?: string;
+
+  @Field({ nullable: true })
+  references?: string;
 }
 
 @InputType()
@@ -56,6 +62,9 @@ export class CreateQuestionInputGQL {
   @Field({ nullable: true })
   explanation?: string;
 
+  @Field({ nullable: true })
+  references?: string;
+
   @Field(() => QuestionDifficulty, { nullable: true, defaultValue: 'MEDIUM' })
   difficulty?: QuestionDifficulty;
 
@@ -68,8 +77,20 @@ export class CreateQuestionInputGQL {
   @Field(() => [String], { nullable: true })
   tags?: string[];
 
+  @Field(() => [String], { nullable: true })
+  sourceTags?: string[];
+
+  @Field(() => [String], { nullable: true })
+  examTags?: string[];
+
   @Field()
   hierarchyItemId: string;
+
+  @Field({ nullable: true })
+  originalHierarchyItemId?: string;
+
+  @Field({ nullable: true })
+  hierarchyType?: string;
 
   @Field(() => [QuestionOptionInput], { nullable: true })
   options?: QuestionOptionInput[];
@@ -95,6 +116,9 @@ export class UpdateQuestionInputGQL {
   @Field({ nullable: true })
   explanation?: string;
 
+  @Field({ nullable: true })
+  references?: string;
+
   @Field(() => QuestionDifficulty, { nullable: true })
   difficulty?: QuestionDifficulty;
 
@@ -106,6 +130,12 @@ export class UpdateQuestionInputGQL {
 
   @Field(() => [String], { nullable: true })
   tags?: string[];
+
+  @Field(() => [String], { nullable: true })
+  sourceTags?: string[];
+
+  @Field(() => [String], { nullable: true })
+  examTags?: string[];
 
   @Field(() => [QuestionOptionInput], { nullable: true })
   options?: QuestionOptionInput[];
@@ -131,6 +161,12 @@ export class QuestionOption {
   @Field()
   order: number;
 
+  @Field({ nullable: true })
+  explanation?: string;
+
+  @Field({ nullable: true })
+  references?: string;
+
   @Field(() => ID)
   questionId: string;
 
@@ -139,6 +175,24 @@ export class QuestionOption {
 
   @Field()
   updatedAt: Date;
+}
+
+@ObjectType()
+export class HierarchyPath {
+  @Field({ nullable: true })
+  year?: string;
+
+  @Field({ nullable: true })
+  subject?: string;
+
+  @Field({ nullable: true })
+  part?: string;
+
+  @Field({ nullable: true })
+  section?: string;
+
+  @Field({ nullable: true })
+  chapter?: string;
 }
 
 @ObjectType()
@@ -158,6 +212,9 @@ export class QuestionResponse {
   @Field({ nullable: true })
   explanation?: string;
 
+  @Field({ nullable: true })
+  references?: string;
+
   @Field()
   difficulty: string;
 
@@ -169,6 +226,12 @@ export class QuestionResponse {
 
   @Field(() => [String])
   tags: string[];
+
+  @Field(() => [String], { nullable: true })
+  sourceTags?: string[];
+
+  @Field(() => [String], { nullable: true })
+  examTags?: string[];
 
   @Field(() => [QuestionOption])
   options: QuestionOption[];
@@ -184,6 +247,9 @@ export class QuestionResponse {
 
   @Field(() => ID)
   hierarchyItemId: string;
+
+  @Field(() => HierarchyPath, { nullable: true })
+  hierarchyPath?: HierarchyPath;
 
   @Field({ nullable: true })
   createdBy?: string;
@@ -223,11 +289,16 @@ export class McqResolver {
       type: input.type as any,
       question: input.question,
       explanation: input.explanation,
+      references: input.references,
       difficulty: input.difficulty as any,
       points: input.points,
       timeLimit: input.timeLimit,
       tags: input.tags,
+      sourceTags: input.sourceTags,
+      examTags: input.examTags,
       hierarchyItemId: input.hierarchyItemId,
+      originalHierarchyItemId: input.originalHierarchyItemId,
+      hierarchyType: input.hierarchyType as any,
       options: input.options,
       assertion: input.assertion,
       reasoning: input.reasoning,
@@ -247,10 +318,13 @@ export class McqResolver {
       type: input.type as any,
       question: input.question,
       explanation: input.explanation,
+      references: input.references,
       difficulty: input.difficulty as any,
       points: input.points,
       timeLimit: input.timeLimit,
       tags: input.tags,
+      sourceTags: input.sourceTags,
+      examTags: input.examTags,
       options: input.options,
       assertion: input.assertion,
       reasoning: input.reasoning
@@ -276,6 +350,14 @@ export class McqResolver {
     @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number = 20
   ): Promise<PaginatedQuestionsResponse> {
     return await this.mcqService.findByHierarchy(hierarchyItemId, page, limit);
+  }
+
+  @Query(() => PaginatedQuestionsResponse)
+  async getAllQuestions(
+    @Args('page', { type: () => Int, defaultValue: 1 }) page: number = 1,
+    @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number = 20
+  ): Promise<PaginatedQuestionsResponse> {
+    return await this.mcqService.findAll(page, limit);
   }
 
   @Mutation(() => Boolean)

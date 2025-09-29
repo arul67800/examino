@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { useTheme } from '@/theme';
-import { HierarchyItemActions, MCQViewIcons, getTypeByLevel } from '@/components/admin/qbm/hierarchy';
-import { InlineMCQEditor, ModalMCQEditor, MCQData } from '@/components/admin/qbm/mcq';
+import { HierarchyItemActions, MCQViewIcons, getTypeByLevel } from '@/components/admin/hierarchy';
+import { InlineMCQEditor, ModalMCQEditor, MCQData } from '@/components/admin/question-bank-manager/mcq';
 
 export default function MCQEditorDemoPage() {
   const { theme } = useTheme();
@@ -134,7 +134,7 @@ export default function MCQEditorDemoPage() {
               onAddSibling={(e) => console.log('Add sibling')}
               onEdit={(e) => console.log('Edit item')}
               getTypeByLevel={getTypeByLevel}
-              mcqEditView="page" // This will navigate to /admin/dashboard/qbm/mcq/[id]
+              mcqEditView="page" // This will navigate to /admin/dashboard/question-bank-manager/mcq/[id]
               onMCQClick={handleMCQClick}
               showDeleteButton={false}
             />
@@ -209,7 +209,7 @@ export default function MCQEditorDemoPage() {
           </button>
 
           <a
-            href="/admin/dashboard/qbm/mcq/demo-question?type=singleChoice"
+            href="/admin/dashboard/question-bank-manager/mcq/demo-question?type=singleChoice"
             target="_blank"
             className="p-4 rounded-xl border-2 text-center hover:shadow-lg transition-all duration-200 hover:scale-105 block"
             style={{
@@ -246,7 +246,7 @@ export default function MCQEditorDemoPage() {
             onCancel={() => setCurrentEditor('none')}
             hierarchyContext={hierarchyContext}
             showExpandButton={true}
-            onExpand={() => window.open('/admin/dashboard/qbm/mcq/demo-question?type=singleChoice', '_blank')}
+            onExpand={() => window.open('/admin/dashboard/question-bank-manager/mcq/demo-question?type=singleChoice', '_blank')}
           />
         )}
 
@@ -325,7 +325,7 @@ export default function MCQEditorDemoPage() {
         hierarchyContext={hierarchyContext}
         onExpandToPage={() => {
           setModalOpen(false);
-          window.open('/admin/dashboard/qbm/mcq/demo-question?type=singleChoice', '_blank');
+          window.open('/admin/dashboard/question-bank-manager/mcq/demo-question?type=singleChoice', '_blank');
         }}
       />
     </div>

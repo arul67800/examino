@@ -37,7 +37,65 @@ model Post {
   @@map("posts")
 }
 
-// Academic Hierarchy Models
+// Academic Hierarchy Models - Question Bank System
+model QuestionBankHierarchy {
+  id          String   @id @default(cuid())
+  name        String
+  level       Int      // 1=Year, 2=Subject, 3=Part, 4=Section, 5=Chapter
+  type        String   // Year/Subject/Part/Section/Chapter
+  color       String?  // Optional color for UI
+  order       Int      @default(0) // For ordering items at same level
+  
+  // Self-referencing hierarchy
+  parentId    String?
+  parent      QuestionBankHierarchy? @relation("QBHierarchyParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children    QuestionBankHierarchy[] @relation("QBHierarchyParent")
+  
+  // Question count for chapters (level 5)
+  questionCount Int @default(0)
+  
+  // Publishing status for sidebar visibility
+  isPublished Boolean @default(false)
+  
+  // Questions relationship
+  questions   Question[] @relation("QuestionBankQuestions")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("question_bank_hierarchy")
+}
+
+// Academic Hierarchy Models - Previous Papers System
+model PreviousPapersHierarchy {
+  id          String   @id @default(cuid())
+  name        String
+  level       Int      // 1=Exam, 2=Year, 3=Subject, 4=Section, 5=Chapter
+  type        String   // Exam/Year/Subject/Section/Chapter
+  color       String?  // Optional color for UI
+  order       Int      @default(0) // For ordering items at same level
+  
+  // Self-referencing hierarchy
+  parentId    String?
+  parent      PreviousPapersHierarchy? @relation("PPHierarchyParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children    PreviousPapersHierarchy[] @relation("PPHierarchyParent")
+  
+  // Question count for chapters (level 5)
+  questionCount Int @default(0)
+  
+  // Publishing status for sidebar visibility
+  isPublished Boolean @default(false)
+  
+  // Questions relationship (previous papers questions)
+  questions   Question[] @relation("PreviousPapersQuestions")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("previous_papers_hierarchy")
+}
+
+// Legacy hierarchy model - keep for backward compatibility during migration
 model HierarchyItem {
   id          String   @id @default(cuid())
   name        String
@@ -54,8 +112,11 @@ model HierarchyItem {
   // Question count for chapters (level 5)
   questionCount Int @default(0)
   
-  // Questions relationship
-  questions   Question[]
+  // Publishing status for sidebar visibility
+  isPublished Boolean @default(false)
+  
+  // Questions relationship (legacy)
+  questions   Question[] @relation("LegacyQuestions")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -70,14 +131,23 @@ model Question {
   type          QuestionType
   question      String      // Question text (can contain HTML from rich editor)
   explanation   String?     // Explanation text (can contain HTML)
+  references    String?     // References text (can contain HTML)
   difficulty    Difficulty  @default(MEDIUM)
   points        Int         @default(1)
   timeLimit     Int?        // Time limit in seconds
-  tags          String?     // JSON string of tags array
+  tags          String?     // JSON string of tags array (legacy)
+  sourceTags    String?     // JSON string of source tags array
+  examTags      String?     // JSON string of exam tags array
   
-  // Hierarchy relationship
-  hierarchyItemId String
-  hierarchyItem   HierarchyItem @relation(fields: [hierarchyItemId], references: [id], onDelete: Cascade)
+  // Hierarchy relationships - only one should be populated at a time
+  hierarchyItemId String?
+  hierarchyItem   HierarchyItem? @relation("LegacyQuestions", fields: [hierarchyItemId], references: [id], onDelete: Cascade)
+  
+  questionBankHierarchyId String?
+  questionBankHierarchy   QuestionBankHierarchy? @relation("QuestionBankQuestions", fields: [questionBankHierarchyId], references: [id], onDelete: Cascade)
+  
+  previousPapersHierarchyId String?
+  previousPapersHierarchy   PreviousPapersHierarchy? @relation("PreviousPapersQuestions", fields: [previousPapersHierarchyId], references: [id], onDelete: Cascade)
   
   // Question options
   options       QuestionOption[]
@@ -95,11 +165,31 @@ model Question {
   @@map("questions")
 }
 
+// Tags System
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   // Tag name
+  category    TagCategory // sources or exams
+  usageCount  Int      @default(1) // How many times this tag has been used
+  createdBy   String?  // User who first created this tag
+  isPreset    Boolean  @default(false) // Whether this is a preset tag
+  isActive    Boolean  @default(true) // Whether this tag is active/visible
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Ensure unique tag names per category
+  @@unique([name, category])
+  @@map("tags")
+}
+
 model QuestionOption {
   id          String    @id @default(cuid())
   text        String    // Option text
   isCorrect   Boolean   @default(false)
   order       Int       @default(0) // Order of options
+  explanation String?   // Individual explanation for this option
+  references  String?   // Individual references for this option
   
   // Relationship to question
   questionId  String
@@ -127,4 +217,11 @@ enum Difficulty {
   HARD
 
   @@map("difficulty")
+}
+
+enum TagCategory {
+  SOURCES
+  EXAMS
+
+  @@map("tag_category")
 }

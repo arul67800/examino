@@ -1,0 +1,320 @@
+/* Rich Text Editor Styles */
+
+/* Image container styles for proper spacing and alignment */
+.image-container {
+  display: block;
+  margin: 1rem 0;
+  text-align: center;
+  clear: both;
+  position: relative;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.image-container:hover {
+  border-color: #3b82f6;
+}
+
+.image-container.selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.image-container img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.image-container.align-left {
+  text-align: left;
+}
+
+.image-container.align-right {
+  text-align: right;
+}
+
+.image-container.align-center {
+  text-align: center;
+}
+
+/* Floating images */
+.image-container.float-left {
+  float: left;
+  margin: 0 1rem 1rem 0;
+  text-align: left;
+}
+
+.image-container.float-right {
+  float: right;
+  margin: 0 0 1rem 1rem;
+  text-align: right;
+}
+
+/* Resizable handles */
+.resize-handle {
+  position: absolute;
+  background: #3b82f6;
+  border: 2px solid white;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.image-container:hover .resize-handle,
+.image-container.selected .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle.nw {
+  top: -5px;
+  left: -5px;
+  cursor: nw-resize;
+}
+
+.resize-handle.ne {
+  top: -5px;
+  right: -5px;
+  cursor: ne-resize;
+}
+
+.resize-handle.sw {
+  bottom: -5px;
+  left: -5px;
+  cursor: sw-resize;
+}
+
+.resize-handle.se {
+  bottom: -5px;
+  right: -5px;
+  cursor: se-resize;
+}
+
+/* Image control toolbar */
+.image-toolbar {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.image-container:hover .image-toolbar,
+.image-container.selected .image-toolbar {
+  opacity: 1;
+}
+
+.image-toolbar button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.image-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Image captions */
+.image-caption {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* Image size indicator */
+.image-size-indicator {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.image-container:hover .image-size-indicator,
+.image-container.selected .image-size-indicator {
+  opacity: 1;
+}
+
+/* Editor content area */
+[contenteditable="true"] {
+  outline: none;
+  line-height: 1.6;
+}
+
+[contenteditable="true"]:focus {
+  outline: none;
+}
+
+/* Placeholder text */
+[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  font-style: italic;
+}
+
+[data-placeholder]:empty:focus::before {
+  content: '';
+}
+
+/* Table styles */
+[contenteditable="true"] table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid #d1d5db;
+}
+
+[contenteditable="true"] table td,
+[contenteditable="true"] table th {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+[contenteditable="true"] table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Code blocks */
+[contenteditable="true"] code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875em;
+}
+
+[contenteditable="true"] pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+[contenteditable="true"] pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* Blockquotes */
+[contenteditable="true"] blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Lists */
+[contenteditable="true"] ul,
+[contenteditable="true"] ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+[contenteditable="true"] li {
+  margin: 0.25rem 0;
+}
+
+/* Links */
+[contenteditable="true"] a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+[contenteditable="true"] a:hover {
+  color: #1d4ed8;
+}
+
+/* Headings */
+[contenteditable="true"] h1,
+[contenteditable="true"] h2,
+[contenteditable="true"] h3,
+[contenteditable="true"] h4,
+[contenteditable="true"] h5,
+[contenteditable="true"] h6 {
+  margin: 1.5rem 0 1rem 0;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+[contenteditable="true"] h1 {
+  font-size: 2rem;
+}
+
+[contenteditable="true"] h2 {
+  font-size: 1.5rem;
+}
+
+[contenteditable="true"] h3 {
+  font-size: 1.25rem;
+}
+
+[contenteditable="true"] h4 {
+  font-size: 1.125rem;
+}
+
+[contenteditable="true"] h5 {
+  font-size: 1rem;
+}
+
+[contenteditable="true"] h6 {
+  font-size: 0.875rem;
+}
+
+/* Paragraphs */
+[contenteditable="true"] p {
+  margin: 1rem 0;
+}
+
+/* Clear fix for floating elements */
+[contenteditable="true"]::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Selection styles */
+[contenteditable="true"] ::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Focus outline for accessibility */
+[contenteditable="true"]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

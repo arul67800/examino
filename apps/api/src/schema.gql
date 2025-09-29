@@ -14,15 +14,27 @@ input CreateQuestionInputGQL {
   assertion: String
   createdBy: String
   difficulty: QuestionDifficulty = MEDIUM
+  examTags: [String!]
   explanation: String
   hierarchyItemId: String!
+  hierarchyType: String
   options: [QuestionOptionInput!]
+  originalHierarchyItemId: String
   points: Float = 1
   question: String!
   reasoning: String
+  references: String
+  sourceTags: [String!]
   tags: [String!]
   timeLimit: Float
   type: QuestionType!
+}
+
+input CreateTagInputGQL {
+  category: TagCategory!
+  createdBy: String
+  isPreset: Boolean
+  name: String!
 }
 
 """
@@ -35,6 +47,7 @@ type HierarchyItem {
   color: String
   createdAt: DateTime!
   id: ID!
+  isPublished: Boolean!
   level: Int!
   name: String!
   order: Int!
@@ -43,6 +56,14 @@ type HierarchyItem {
   questionCount: Int!
   type: String!
   updatedAt: DateTime!
+}
+
+type HierarchyPath {
+  chapter: String
+  part: String
+  section: String
+  subject: String
+  year: String
 }
 
 type HierarchyStats {
@@ -55,23 +76,78 @@ type HierarchyStats {
 type Mutation {
   """Create a new hierarchy item"""
   createHierarchyItem(input: CreateHierarchyItemInput!): HierarchyItem!
+  createOrUpdateTag(input: CreateTagInputGQL!): Tag!
   createPost(authorId: String!, content: String, title: String!): Post!
+
+  """Create a new previous papers hierarchy item"""
+  createPreviousPapersHierarchyItem(input: CreateHierarchyItemInput!): PreviousPapersHierarchyItem!
   createQuestion(input: CreateQuestionInputGQL!): QuestionResponse!
+
+  """Create a new main bank hierarchy item"""
+  createQuestionBankHierarchyItem(input: CreateHierarchyItemInput!): QuestionBankHierarchyItem!
   createUser(email: String!, name: String): User!
+  deactivateTag(id: String!): Tag!
 
   """Delete a hierarchy item (only if it has no children)"""
   deleteHierarchyItem(id: ID!): Boolean!
+
+  """Delete a previous papers hierarchy item (only if it has no children)"""
+  deletePreviousPapersHierarchyItem(id: ID!): Boolean!
   deleteQuestion(id: String!): Boolean!
+
+  """Delete a main bank hierarchy item (only if it has no children)"""
+  deleteQuestionBankHierarchyItem(id: ID!): Boolean!
+  deleteTag(id: String!): Boolean!
+  initializePresetTags: Boolean!
+
+  """Publish a hierarchy item to make it visible in the sidebar"""
+  publishHierarchyItem(id: ID!): HierarchyItem!
+
+  """
+  Publish a previous papers hierarchy item to make it visible in the sidebar
+  """
+  publishPreviousPapersHierarchyItem(id: ID!): PreviousPapersHierarchyItem!
+
+  """Publish a main bank hierarchy item to make it visible in the sidebar"""
+  publishQuestionBankHierarchyItem(id: ID!): QuestionBankHierarchyItem!
 
   """Reorder multiple hierarchy items"""
   reorderHierarchyItems(items: [ReorderHierarchyItemInput!]!): [HierarchyItem!]!
 
+  """Reorder multiple previous papers hierarchy items"""
+  reorderPreviousPapersHierarchyItems(items: [ReorderHierarchyItemInput!]!): [PreviousPapersHierarchyItem!]!
+
+  """Reorder multiple main bank hierarchy items"""
+  reorderQuestionBankHierarchyItems(items: [ReorderHierarchyItemInput!]!): [QuestionBankHierarchyItem!]!
+
+  """Unpublish a hierarchy item to hide it from the sidebar"""
+  unpublishHierarchyItem(id: ID!): HierarchyItem!
+
+  """Unpublish a previous papers hierarchy item to hide it from the sidebar"""
+  unpublishPreviousPapersHierarchyItem(id: ID!): PreviousPapersHierarchyItem!
+
+  """Unpublish a main bank hierarchy item to hide it from the sidebar"""
+  unpublishQuestionBankHierarchyItem(id: ID!): QuestionBankHierarchyItem!
+
   """Update an existing hierarchy item"""
   updateHierarchyItem(id: ID!, input: UpdateHierarchyItemInput!): HierarchyItem!
+
+  """Update an existing previous papers hierarchy item"""
+  updatePreviousPapersHierarchyItem(id: ID!, input: UpdateHierarchyItemInput!): PreviousPapersHierarchyItem!
+
+  """Update the question count for a previous papers chapter (level 5 only)"""
+  updatePreviousPapersQuestionCount(count: Float!, id: ID!): PreviousPapersHierarchyItem!
   updateQuestion(id: String!, input: UpdateQuestionInputGQL!): QuestionResponse!
+
+  """Update an existing main bank hierarchy item"""
+  updateQuestionBankHierarchyItem(id: ID!, input: UpdateHierarchyItemInput!): QuestionBankHierarchyItem!
+
+  """Update the question count for a question bank chapter (level 5 only)"""
+  updateQuestionBankQuestionCount(count: Float!, id: ID!): QuestionBankHierarchyItem!
 
   """Update the question count for a chapter (level 5 only)"""
   updateQuestionCount(count: Float!, id: ID!): HierarchyItem!
+  updateTag(id: String!, input: UpdateTagInputGQL!): Tag!
 }
 
 type PaginatedQuestionsResponse {
@@ -91,10 +167,30 @@ type Post {
   updatedAt: DateTime!
 }
 
+type PreviousPapersHierarchyItem {
+  children: [PreviousPapersHierarchyItem!]!
+  color: String
+  createdAt: DateTime!
+  id: ID!
+  isPublished: Boolean!
+  level: Int!
+  name: String!
+  order: Int!
+  parent: PreviousPapersHierarchyItem
+  parentId: ID
+  questionCount: Int!
+  type: String!
+  updatedAt: DateTime!
+}
+
 type Query {
+  getAllQuestions(limit: Int! = 20, page: Int! = 1): PaginatedQuestionsResponse!
+  getAllTags: [Tag!]!
   getQuestion(id: String!): QuestionResponse!
   getQuestionByHumanId(humanId: String!): QuestionResponse!
   getQuestionsByHierarchy(hierarchyItemId: String!, limit: Int! = 20, page: Int! = 1): PaginatedQuestionsResponse!
+  getTagByNameAndCategory(category: TagCategory!, name: String!): Tag
+  getTagsByCategory(category: TagCategory!): [Tag!]!
 
   """Get a specific hierarchy item by ID"""
   hierarchyItem(id: ID!): HierarchyItem
@@ -112,8 +208,63 @@ type Query {
   hierarchyStats: [HierarchyStats!]!
   post(id: String!): Post
   posts: [Post!]!
+
+  """Get a specific previous papers hierarchy item by ID"""
+  previousPapersHierarchyItem(id: ID!): PreviousPapersHierarchyItem
+
+  """Get all previous papers hierarchy items with nested children"""
+  previousPapersHierarchyItems: [PreviousPapersHierarchyItem!]!
+
+  """Get all previous papers hierarchy items at a specific level"""
+  previousPapersHierarchyItemsByLevel(level: Float!): [PreviousPapersHierarchyItem!]!
+
+  """Get all direct children of a parent previous papers hierarchy item"""
+  previousPapersHierarchyItemsByParent(parentId: ID!): [PreviousPapersHierarchyItem!]!
+
+  """Get statistics about the previous papers hierarchy structure"""
+  previousPapersHierarchyStats: [HierarchyStats!]!
+
+  """Get all published hierarchy items for sidebar display"""
+  publishedHierarchyItems: [HierarchyItem!]!
+
+  """Get all published previous papers hierarchy items for sidebar display"""
+  publishedPreviousPapersHierarchyItems: [PreviousPapersHierarchyItem!]!
+
+  """Get all published main bank hierarchy items for sidebar display"""
+  publishedQuestionBankHierarchyItems: [QuestionBankHierarchyItem!]!
+
+  """Get a specific main bank hierarchy item by ID"""
+  questionBankHierarchyItem(id: ID!): QuestionBankHierarchyItem
+
+  """Get all main bank hierarchy items with nested children"""
+  questionBankHierarchyItems: [QuestionBankHierarchyItem!]!
+
+  """Get all main bank hierarchy items at a specific level"""
+  questionBankHierarchyItemsByLevel(level: Float!): [QuestionBankHierarchyItem!]!
+
+  """Get all direct children of a parent main bank hierarchy item"""
+  questionBankHierarchyItemsByParent(parentId: ID!): [QuestionBankHierarchyItem!]!
+
+  """Get statistics about the main bank hierarchy structure"""
+  questionBankHierarchyStats: [HierarchyStats!]!
   user(id: String!): User
   users: [User!]!
+}
+
+type QuestionBankHierarchyItem {
+  children: [QuestionBankHierarchyItem!]!
+  color: String
+  createdAt: DateTime!
+  id: ID!
+  isPublished: Boolean!
+  level: Int!
+  name: String!
+  order: Int!
+  parent: QuestionBankHierarchyItem
+  parentId: ID
+  questionCount: Int!
+  type: String!
+  updatedAt: DateTime!
 }
 
 enum QuestionDifficulty {
@@ -124,18 +275,22 @@ enum QuestionDifficulty {
 
 type QuestionOption {
   createdAt: DateTime!
+  explanation: String
   id: ID!
   isCorrect: Boolean!
   order: Float!
   questionId: ID!
+  references: String
   text: String!
   updatedAt: DateTime!
 }
 
 input QuestionOptionInput {
+  explanation: String
   id: String
   isCorrect: Boolean!
   order: Float
+  references: String
   text: String!
 }
 
@@ -144,8 +299,10 @@ type QuestionResponse {
   createdAt: DateTime!
   createdBy: String
   difficulty: String!
+  examTags: [String!]
   explanation: String
   hierarchyItemId: ID!
+  hierarchyPath: HierarchyPath
   humanId: String!
   id: ID!
   isActive: Boolean!
@@ -153,6 +310,8 @@ type QuestionResponse {
   points: Float!
   question: String!
   reasoning: String
+  references: String
+  sourceTags: [String!]
   tags: [String!]!
   timeLimit: Float
   type: QuestionType!
@@ -171,6 +330,23 @@ input ReorderHierarchyItemInput {
   order: Float!
 }
 
+type Tag {
+  category: TagCategory!
+  createdAt: String!
+  createdBy: String
+  id: String!
+  isActive: Boolean!
+  isPreset: Boolean!
+  name: String!
+  updatedAt: String!
+  usageCount: Int!
+}
+
+enum TagCategory {
+  EXAMS
+  SOURCES
+}
+
 input UpdateHierarchyItemInput {
   color: String
   name: String
@@ -181,14 +357,23 @@ input UpdateHierarchyItemInput {
 input UpdateQuestionInputGQL {
   assertion: String
   difficulty: QuestionDifficulty
+  examTags: [String!]
   explanation: String
   options: [QuestionOptionInput!]
   points: Float
   question: String
   reasoning: String
+  references: String
+  sourceTags: [String!]
   tags: [String!]
   timeLimit: Float
   type: QuestionType
+}
+
+input UpdateTagInputGQL {
+  isActive: Boolean
+  name: String
+  usageCount: Int
 }
 
 type User {

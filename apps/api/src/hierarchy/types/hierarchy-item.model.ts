@@ -26,6 +26,9 @@ export class HierarchyItem {
   @Field(() => Int)
   questionCount: number;
 
+  @Field(() => Boolean, { defaultValue: false })
+  isPublished: boolean;
+
   @Field(() => [HierarchyItem], { defaultValue: [] })
   children: HierarchyItem[];
 

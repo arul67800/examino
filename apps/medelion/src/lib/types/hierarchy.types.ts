@@ -7,6 +7,7 @@ export interface HierarchyItem {
   order: number;
   parentId?: string | null;
   questionCount: number;
+  isPublished: boolean;
   children: HierarchyItem[];
   parent?: HierarchyItem | null;
   createdAt: string;

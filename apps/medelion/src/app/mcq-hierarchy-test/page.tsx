@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MCQHierarchyBreadcrumb, HierarchyPath, PageMCQEditor, InlineMCQEditor, ModalMCQEditor } from '@/components/admin/qbm/mcq';
+import { MCQHierarchyBreadcrumb, HierarchyPath, PageMCQEditor, InlineMCQEditor, ModalMCQEditor } from '@/components/admin/question-bank-manager/mcq';
 import { useTheme } from '@/theme';
 
 export default function MCQHierarchyTestPage() {

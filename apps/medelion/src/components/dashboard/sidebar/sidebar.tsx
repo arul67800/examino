@@ -12,8 +12,9 @@ import {
   NavigationItem,
   MenuItemProps 
 } from './sidebar-types';
-import { getNavigationMenu, getAdminNavigationMenu, defaultUserProfile, animationConfig } from './sidebar-menu';
+import { getNavigationMenu, getAdminNavigationMenu, getDynamicNavigationMenu, defaultUserProfile, animationConfig } from './sidebar-menu';
 import { SidebarUtils } from '../../../routes/server-utils';
+import { usePublishedItems } from '../../../context/published-items-context';
 
 // Individual Menu Item Component with animations
 const MenuItemComponent = ({ 
@@ -47,17 +48,17 @@ const MenuItemComponent = ({
           color: isActive ? theme.colors.semantic.text.primary : theme.colors.semantic.text.secondary
         }}
         onClick={(e) => {
-          // If item has href, navigate but don't toggle parent expansion
-          if ('href' in item && item.href) {
-            onClick(item);
-            // Don't prevent default or stop propagation for navigation items
-            return;
-          }
-          
-          // If item has children but no href, toggle expansion
+          // If item has children, prioritize expansion over navigation
           if (hasChildren) {
             e.preventDefault(); // Prevent navigation for parent items
             onToggle(item.id);
+            return;
+          }
+          
+          // If item has href but no children, navigate
+          if ('href' in item && item.href) {
+            onClick(item);
+            // Don't prevent default or stop propagation for navigation items
             return;
           }
           
@@ -252,21 +253,36 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useTheme();
+  const { sidebarMenuItems } = usePublishedItems();
   
   // Memoize navigationMenu to prevent recreating it on every render
-  const navigationMenu = useMemo(() => 
-    isAdmin ? getAdminNavigationMenu() : getNavigationMenu(), 
-    [isAdmin]
-  );
+  const navigationMenu = useMemo(() => {
+    if (isAdmin) {
+      return getAdminNavigationMenu();
+    } else {
+      return getDynamicNavigationMenu(sidebarMenuItems);
+    }
+  }, [isAdmin, sidebarMenuItems]);
   
   // Initialize state based on current route (without localStorage to avoid hydration mismatch)
   const [state, setState] = useState<SidebarState>(() => {
     const activeItem = SidebarUtils.getActiveMenuItem(pathname, navigationMenu);
     const expandedItems = SidebarUtils.getExpandedItems(pathname, navigationMenu);
     
+    // Remove 'question-bank' from auto-expanded items unless user is currently on a question-bank route
+    const filteredExpandedItems = new Set(
+      Array.from(expandedItems).filter(itemId => {
+        if (itemId === 'question-bank') {
+          // Only keep question-bank expanded if user is currently on a question-bank related route
+          return pathname.includes('/question-bank') || pathname.includes('/question-bank-manager');
+        }
+        return true;
+      })
+    );
+    
     return {
       isCollapsed: defaultCollapsed,
-      expandedItems,
+      expandedItems: filteredExpandedItems,
       activeItem,
       hoveredItem: null
     };
@@ -281,9 +297,24 @@ export function Sidebar({
       const savedExpandedItems = localStorage.getItem('sidebar-expanded-items');
       if (savedExpandedItems) {
         const parsedItems = JSON.parse(savedExpandedItems);
+        
+        // Clean up localStorage to remove question-bank if not on a question-bank route
+        const isOnQuestionBankRoute = pathname.includes('/question-bank') || pathname.includes('/question-bank-manager');
+        const cleanedItems = parsedItems.filter((item: string) => {
+          if (item === 'question-bank') {
+            return isOnQuestionBankRoute;
+          }
+          return true;
+        });
+        
+        // Update localStorage with cleaned items
+        if (cleanedItems.length !== parsedItems.length) {
+          localStorage.setItem('sidebar-expanded-items', JSON.stringify(cleanedItems));
+        }
+        
         setState(prevState => {
           const newExpandedItems = new Set(prevState.expandedItems);
-          parsedItems.forEach((item: string) => newExpandedItems.add(item));
+          cleanedItems.forEach((item: string) => newExpandedItems.add(item));
           return {
             ...prevState,
             expandedItems: newExpandedItems
@@ -293,7 +324,7 @@ export function Sidebar({
     } catch (error) {
       console.warn('Failed to restore sidebar state:', error);
     }
-  }, []);
+  }, [pathname]); // Added pathname as dependency
 
   // Update active item when pathname changes
   useEffect(() => {
@@ -305,8 +336,18 @@ export function Sidebar({
       const hasActiveItemChanged = prev.activeItem !== activeItem;
       
       if (hasActiveItemChanged) {
+        // Filter route-based expanded items to exclude question-bank unless on a question-bank route
+        const filteredRouteExpandedItems = new Set(
+          Array.from(routeExpandedItems).filter(itemId => {
+            if (itemId === 'question-bank') {
+              return pathname.includes('/question-bank') || pathname.includes('/question-bank-manager');
+            }
+            return true;
+          })
+        );
+        
         // Merge route-based expanded items with manually expanded items
-        const newExpandedItems = new Set([...prev.expandedItems, ...routeExpandedItems]);
+        const newExpandedItems = new Set([...prev.expandedItems, ...filteredRouteExpandedItems]);
         
         return {
           ...prev,

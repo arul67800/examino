@@ -90,6 +90,33 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
     ]
   },
   {
+    id: 'hierarchy-management',
+    name: 'Hierarchy Management',
+    icon: <TagIcon />,
+    level: 1,
+    description: 'Manage system hierarchies and categorization',
+    children: [
+      {
+        id: 'question-bank-hierarchy',
+        name: 'Main Bank Hierarchy',
+        icon: <DocumentTextIcon />,
+        href: '/admin/dashboard/hierarchy/question-bank',
+        level: 2,
+        parentId: 'hierarchy-management',
+        description: 'Manage question bank categorization and structure'
+      },
+      {
+        id: 'previous-papers-hierarchy',
+        name: 'Previous Papers Hierarchy',
+        icon: <DocumentDuplicateIcon />,
+        href: '/admin/dashboard/hierarchy/previous-papers',
+        level: 2,
+        parentId: 'hierarchy-management',
+        description: 'Manage previous papers categorization and structure'
+      }
+    ]
+  },
+  {
     id: 'question-bank-manager',
     name: 'Question Bank Manager',
     icon: <DocumentTextIcon />,
@@ -101,7 +128,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         id: 'qbm-overview',
         name: 'Overview',
         icon: <ClipboardListIcon />,
-        href: '/admin/dashboard/qbm',
+        href: '/admin/dashboard/question-bank-manager',
         level: 2,
         parentId: 'question-bank-manager',
         description: 'Question bank overview and statistics'
@@ -110,7 +137,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         id: 'qbm-hierarchy',
         name: 'Hierarchy Management',
         icon: <TagIcon />,
-        href: '/admin/dashboard/qbm/hierarchy',
+        href: '/admin/dashboard/question-bank-manager/hierarchy',
         level: 2,
         parentId: 'question-bank-manager',
         description: 'Manage question categories and hierarchy'
@@ -119,7 +146,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         id: 'mcq-editor',
         name: 'MCQ Editor',
         icon: <DocumentTextIcon />,
-        href: '/admin/dashboard/qbm/mcq',
+        href: '/admin/dashboard/question-bank-manager/mcq',
         level: 2,
         parentId: 'question-bank-manager',
         description: 'Create and edit multiple choice questions'
@@ -137,7 +164,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-approval-pending',
             name: 'Pending Review',
             icon: '⏳',
-            href: '/admin/dashboard/qbm/approval/pending',
+            href: '/admin/dashboard/question-bank-manager/approval/pending',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-approval',
@@ -147,7 +174,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-approval-approved',
             name: 'Approved Content',
             icon: '✅',
-            href: '/admin/dashboard/qbm/approval/approved',
+            href: '/admin/dashboard/question-bank-manager/approval/approved',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-approval'
@@ -156,7 +183,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-approval-rejected',
             name: 'Rejected Content',
             icon: '❌',
-            href: '/admin/dashboard/qbm/approval/rejected',
+            href: '/admin/dashboard/question-bank-manager/approval/rejected',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-approval'
@@ -167,7 +194,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         id: 'qbm-question-bank',
         name: 'Question Bank',
         icon: <BookOpenIcon />,
-        href: '/admin/dashboard/qbm/question-bank',
+        href: '/admin/dashboard/question-bank-manager/question-bank',
         level: 2,
         parentId: 'question-bank-manager',
         description: 'Browse and manage question collection'
@@ -184,7 +211,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-bulk-import',
             name: 'Bulk Import',
             icon: '📥',
-            href: '/admin/dashboard/qbm/bulk/import',
+            href: '/admin/dashboard/question-bank-manager/bulk/import',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-bulk-operations'
@@ -193,7 +220,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-bulk-export',
             name: 'Bulk Export',
             icon: '📤',
-            href: '/admin/dashboard/qbm/bulk/export',
+            href: '/admin/dashboard/question-bank-manager/bulk/export',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-bulk-operations'
@@ -202,7 +229,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-bulk-update',
             name: 'Bulk Update',
             icon: '🔄',
-            href: '/admin/dashboard/qbm/bulk/update',
+            href: '/admin/dashboard/question-bank-manager/bulk/update',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-bulk-operations'
@@ -211,7 +238,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-bulk-delete',
             name: 'Bulk Delete',
             icon: '🗑️',
-            href: '/admin/dashboard/qbm/bulk/delete',
+            href: '/admin/dashboard/question-bank-manager/bulk/delete',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-bulk-operations'
@@ -230,7 +257,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-quality-validation',
             name: 'Content Validation',
             icon: '🔍',
-            href: '/admin/dashboard/qbm/quality/validation',
+            href: '/admin/dashboard/question-bank-manager/quality/validation',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-quality-control'
@@ -239,7 +266,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-quality-duplicates',
             name: 'Duplicate Detection',
             icon: '👯',
-            href: '/admin/dashboard/qbm/quality/duplicates',
+            href: '/admin/dashboard/question-bank-manager/quality/duplicates',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-quality-control'
@@ -248,7 +275,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-quality-reports',
             name: 'Quality Reports',
             icon: '📋',
-            href: '/admin/dashboard/qbm/quality/reports',
+            href: '/admin/dashboard/question-bank-manager/quality/reports',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-quality-control'
@@ -257,7 +284,7 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
             id: 'qbm-quality-metrics',
             name: 'Quality Metrics',
             icon: <ChartBarIcon />,
-            href: '/admin/dashboard/qbm/quality/metrics',
+            href: '/admin/dashboard/question-bank-manager/quality/metrics',
             level: 3,
             parentId: 'question-bank-manager',
             subParentId: 'qbm-quality-control'
@@ -284,22 +311,13 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         description: 'Article bank overview and statistics'
       },
       {
-        id: 'abm-content',
-        name: 'Content Management',
-        icon: <DocumentTextIcon />,
-        href: '/admin/dashboard/abm/content',
+        id: 'abm-create',
+        name: 'Create Article',
+        icon: <PlusIcon />,
+        href: '/admin/dashboard/abm/create',
         level: 2,
         parentId: 'article-bank-manager',
-        description: 'Create and manage articles'
-      },
-      {
-        id: 'abm-categories',
-        name: 'Categories',
-        icon: <TagIcon />,
-        href: '/admin/dashboard/abm/categories',
-        level: 2,
-        parentId: 'article-bank-manager',
-        description: 'Manage article categories'
+        description: 'Create new educational articles'
       }
     ]
   },
@@ -502,6 +520,15 @@ export const getAdminNavigationMenu = (): MenuItem[] => [
         level: 2,
         parentId: 'editor-manager',
         description: 'Manage editorial workflow'
+      },
+      {
+        id: 'em-rich-text-editor',
+        name: 'Rich Text Editor',
+        icon: <DocumentTextIcon />,
+        href: '/admin/dashboard/text-editor-manager/rich-text-editor',
+        level: 2,
+        parentId: 'editor-manager',
+        description: 'Advanced rich text content editor'
       }
     ]
   },
@@ -731,116 +758,10 @@ export const getNavigationMenu = (): MenuItem[] => [
     id: 'question-bank',
     name: 'Question Bank',
     icon: <DocumentTextIcon />,
+    href: ROUTES.QUESTION_BANK.ROOT,
     level: 1,
     badge: 'New',
-    description: 'Manage your question collections',
-    children: [
-      {
-        id: 'qb-overview',
-        name: 'Overview',
-        icon: <ClipboardListIcon />,
-        href: ROUTES.QUESTION_BANK.ROOT,
-        level: 2,
-        parentId: 'question-bank',
-        description: 'Question bank overview'
-      },
-      {
-        id: 'qb-categories',
-        name: 'Categories',
-        icon: <TagIcon />,
-        level: 2,
-        parentId: 'question-bank',
-        description: 'Organize questions by categories',
-        children: [
-          {
-            id: 'qb-cat-math',
-            name: 'Mathematics',
-            icon: <CalculatorIcon />,
-            href: ROUTES.QUESTION_BANK.CATEGORIES.MATHEMATICS,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-categories',
-            badge: 45
-          },
-          {
-            id: 'qb-cat-science',
-            name: 'Science',
-            icon: <BeakerIcon />,
-            href: ROUTES.QUESTION_BANK.CATEGORIES.SCIENCE,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-categories',
-            badge: 32
-          },
-          {
-            id: 'qb-cat-english',
-            name: 'English',
-            icon: <BookOpenIcon />,
-            href: ROUTES.QUESTION_BANK.CATEGORIES.ENGLISH,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-categories',
-            badge: 28
-          },
-          {
-            id: 'qb-cat-history',
-            name: 'History',
-            icon: <BuildingIcon />,
-            href: ROUTES.QUESTION_BANK.CATEGORIES.HISTORY,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-categories',
-            badge: 15
-          }
-        ]
-      },
-      {
-        id: 'qb-difficulty',
-        name: 'Difficulty Levels',
-        icon: <ChartBarIcon />,
-        level: 2,
-        parentId: 'question-bank',
-        description: 'Questions sorted by difficulty',
-        children: [
-          {
-            id: 'qb-easy',
-            name: 'Easy',
-            icon: <CircleIcon color="#10B981" />,
-            href: ROUTES.QUESTION_BANK.DIFFICULTY.EASY,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-difficulty'
-          },
-          {
-            id: 'qb-medium',
-            name: 'Medium',
-            icon: <CircleIcon color="#F59E0B" />,
-            href: ROUTES.QUESTION_BANK.DIFFICULTY.MEDIUM,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-difficulty'
-          },
-          {
-            id: 'qb-hard',
-            name: 'Hard',
-            icon: <CircleIcon color="#EF4444" />,
-            href: ROUTES.QUESTION_BANK.DIFFICULTY.HARD,
-            level: 3,
-            parentId: 'question-bank',
-            subParentId: 'qb-difficulty'
-          }
-        ]
-      },
-      {
-        id: 'qb-import',
-        name: 'Import/Export',
-        icon: <ArrowUpTrayIcon />,
-        href: ROUTES.QUESTION_BANK.IMPORT_EXPORT,
-        level: 2,
-        parentId: 'question-bank',
-        description: 'Import or export questions'
-      }
-    ]
+    description: 'Manage your question collections'
   },
   {
     id: 'examinations',
@@ -1131,6 +1052,55 @@ export const getNavigationMenu = (): MenuItem[] => [
 
 // Convenience export for backward compatibility
 export const navigationMenu = getNavigationMenu();
+
+// Interface for published sidebar items
+interface PublishedSidebarItem {
+  id: string;
+  name: string;
+  icon: string | React.ReactNode;
+  href?: string;
+  level: 1 | 2 | 3;
+  children?: PublishedSidebarItem[];
+  parentId?: string;
+  subParentId?: string;
+  isPublished?: boolean;
+}
+
+// Dynamic navigation menu that includes published hierarchy items
+export const getDynamicNavigationMenu = (publishedItems: PublishedSidebarItem[] = []): MenuItem[] => {
+  const baseMenu = getNavigationMenu();
+  
+  // Find the Question Bank menu item and add published items as children
+  const updatedMenu = baseMenu.map(item => {
+    if (item.id === 'question-bank' && publishedItems.length > 0) {
+      return {
+        ...item,
+        children: publishedItems.map(publishedItem => ({
+          id: publishedItem.id,
+          name: publishedItem.name,
+          icon: publishedItem.icon,
+          href: publishedItem.href,
+          level: 2 as const,
+          parentId: 'question-bank',
+          description: `${publishedItem.name} questions and topics`,
+          children: publishedItem.children?.filter(child => child.href).map(child => ({
+            id: child.id,
+            name: child.name,
+            icon: child.icon,
+            href: child.href!,
+            level: 3 as const,
+            parentId: 'question-bank',
+            subParentId: publishedItem.id,
+            description: `${child.name} questions`
+          }))
+        }))
+      };
+    }
+    return item;
+  });
+  
+  return updatedMenu;
+};
 
 export const defaultUserProfile: UserProfile = {
   name: 'John Doe',

@@ -1,0 +1,220 @@
+/* Interactive Image Styles */
+
+.resizable-image {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.resizable-image.selected {
+  box-shadow: 0 0 0 2px var(--action-primary, #3b82f6);
+}
+
+.resizable-image:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: var(--action-primary, #3b82f6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizable-image.selected .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle:hover {
+  transform: scale(1.2);
+}
+
+/* Corner handles */
+.resize-handle.nw {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+.resize-handle.ne {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.resize-handle.sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.resize-handle.se {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+/* Edge handles */
+.resize-handle.n {
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
+
+.resize-handle.s {
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
+}
+
+.resize-handle.w {
+  top: 50%;
+  left: -6px;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
+
+.resize-handle.e {
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
+
+/* Image toolbar */
+.image-toolbar {
+  position: absolute;
+  top: -45px;
+  left: 0;
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.2s ease;
+  z-index: 1001;
+}
+
+.resizable-image.selected .image-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.image-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.image-toolbar button:hover {
+  background-color: #f3f4f6;
+}
+
+.image-toolbar button.danger {
+  color: #ef4444;
+}
+
+.image-toolbar button.danger:hover {
+  background-color: #fef2f2;
+}
+
+/* Text wrapping styles */
+.image-wrap-left {
+  float: left;
+  margin: 0 16px 16px 0;
+}
+
+.image-wrap-right {
+  float: right;
+  margin: 0 0 16px 16px;
+}
+
+.image-wrap-center {
+  display: block;
+  margin: 16px auto;
+}
+
+.image-wrap-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 8px;
+}
+
+/* Drag indicators */
+.drag-indicator {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--action-primary, #3b82f6);
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizable-image.dragging .drag-indicator {
+  opacity: 1;
+}
+
+/* Selection indicator */
+.image-selection-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  background: var(--action-primary, #3b82f6);
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 1002;
+}
+
+/* Canvas styles */
+.image-canvas {
+  position: relative;
+  overflow: visible;
+  min-height: 500px;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+  .resize-handle {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .resize-handle.nw { top: -8px; left: -8px; }
+  .resize-handle.ne { top: -8px; right: -8px; }
+  .resize-handle.sw { bottom: -8px; left: -8px; }
+  .resize-handle.se { bottom: -8px; right: -8px; }
+  
+  .image-toolbar {
+    top: -50px;
+  }
+  
+  .image-toolbar button {
+    width: 32px;
+    height: 32px;
+  }
+}

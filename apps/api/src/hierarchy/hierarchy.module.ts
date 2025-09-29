@@ -1,14 +1,30 @@
 import { Module } from '@nestjs/common';
-import { HierarchyResolver } from './resolvers';
-import { HierarchyService } from './services';
+import { 
+  HierarchyResolver,
+  QuestionBankHierarchyResolver,
+  PreviousPapersHierarchyResolver
+} from './resolvers';
+import { 
+  HierarchyService,
+  QuestionBankHierarchyService,
+  PreviousPapersHierarchyService
+} from './services';
 import { PrismaService } from '../prisma.service';
 
 @Module({
   providers: [
     HierarchyResolver,
+    QuestionBankHierarchyResolver,
+    PreviousPapersHierarchyResolver,
     HierarchyService,
+    QuestionBankHierarchyService,
+    PreviousPapersHierarchyService,
     PrismaService
   ],
-  exports: [HierarchyService]
+  exports: [
+    HierarchyService,
+    QuestionBankHierarchyService,
+    PreviousPapersHierarchyService
+  ]
 })
 export class HierarchyModule {}

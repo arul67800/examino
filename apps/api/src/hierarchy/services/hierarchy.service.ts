@@ -205,6 +205,85 @@ export class HierarchyService {
     }));
   }
 
+  async publish(id: string): Promise<HierarchyItem> {
+    const item = await this.prisma.hierarchyItem.findUnique({
+      where: { id },
+      include: { parent: true }
+    });
+
+    if (!item) {
+      throw new NotFoundException(`Hierarchy item with ID ${id} not found`);
+    }
+
+    // Check if parent is published (unless it's a Year - level 1)
+    if (item.level > 1 && item.parent && !item.parent.isPublished) {
+      throw new BadRequestException('Please publish the parent first to proceed');
+    }
+
+    const updatedItem = await this.prisma.hierarchyItem.update({
+      where: { id },
+      data: { isPublished: true },
+      include: {
+        children: true,
+        parent: true
+      }
+    });
+
+    return updatedItem as unknown as HierarchyItem;
+  }
+
+  async unpublish(id: string): Promise<HierarchyItem> {
+    const item = await this.prisma.hierarchyItem.findUnique({
+      where: { id },
+      include: { children: true }
+    });
+
+    if (!item) {
+      throw new NotFoundException(`Hierarchy item with ID ${id} not found`);
+    }
+
+    // Unpublish all children first
+    if (item.children.length > 0) {
+      await this.prisma.hierarchyItem.updateMany({
+        where: { parentId: id },
+        data: { isPublished: false }
+      });
+    }
+
+    const updatedItem = await this.prisma.hierarchyItem.update({
+      where: { id },
+      data: { isPublished: false },
+      include: {
+        children: true,
+        parent: true
+      }
+    });
+
+    return updatedItem as unknown as HierarchyItem;
+  }
+
+  async findPublished(): Promise<HierarchyItem[]> {
+    const items = await this.prisma.hierarchyItem.findMany({
+      where: { 
+        isPublished: true,
+        OR: [
+          { level: 1 }, // Years
+          { level: 2 }  // Subjects
+        ]
+      },
+      include: {
+        children: {
+          where: { isPublished: true },
+          orderBy: { order: 'asc' }
+        },
+        parent: true
+      },
+      orderBy: { order: 'asc' }
+    });
+
+    return items as unknown as HierarchyItem[];
+  }
+
   private getTypeByLevel(level: number): string {
     switch (level) {
       case 1: return 'Year';

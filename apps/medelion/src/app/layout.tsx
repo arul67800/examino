@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/theme";
 import { ApolloClientProvider } from "@/lib/apollo-provider";
+import { ToastProvider } from "@/components/ui/toast";
+import { PublishedItemsProvider } from "@/context/published-items-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,7 +39,11 @@ export default function RootLayout({
             enableSystemModeDetection={false}
             enableDirectionDetection={false}
           >
-            {children}
+            <ToastProvider>
+              <PublishedItemsProvider>
+                {children}
+              </PublishedItemsProvider>
+            </ToastProvider>
           </ThemeProvider>
         </ApolloClientProvider>
       </body>
