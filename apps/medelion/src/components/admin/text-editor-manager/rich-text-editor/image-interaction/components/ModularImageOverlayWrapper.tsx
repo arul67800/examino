@@ -14,11 +14,11 @@ interface TextWrapSettings {
   distanceFromText: number;
 }
 
-interface ImageOverlayProps {
+interface ModularImageOverlayWrapperProps {
   editorElement: HTMLElement;
 }
 
-export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => {
+export const ModularImageOverlayWrapper: React.FC<ModularImageOverlayWrapperProps> = ({ editorElement }) => {
   const semanticColors = useSemanticColors();
   const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -34,6 +34,43 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
   const lastPositionRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dragStartPositionRef = useRef<{x: number, y: number} | null>(null);
+
+  // Enhanced coordinate mapper for precise drag-drop positioning
+  const coordinateMapper = useRef({
+    clientToEditor: (clientX: number, clientY: number) => {
+      const editorRect = editorElement.getBoundingClientRect();
+      return {
+        x: clientX - editorRect.left,
+        y: clientY - editorRect.top
+      };
+    },
+    
+    // Get precise drop coordinates accounting for scroll and transforms
+    getPreciseDropCoordinates: (clientX: number, clientY: number) => {
+      const editorRect = editorElement.getBoundingClientRect();
+      
+      // Account for any editor scrolling
+      const editorScrollTop = editorElement.scrollTop;
+      const editorScrollLeft = editorElement.scrollLeft;
+      
+      // Convert to editor-relative coordinates
+      const x = clientX - editorRect.left + editorScrollLeft;
+      const y = clientY - editorRect.top + editorScrollTop;
+      
+      return { x: Math.round(x), y: Math.round(y) };
+    },
+    
+    // Check if coordinates are within editor bounds
+    isWithinBounds: (clientX: number, clientY: number) => {
+      const editorRect = editorElement.getBoundingClientRect();
+      return (
+        clientX >= editorRect.left &&
+        clientX <= editorRect.right &&
+        clientY >= editorRect.top &&
+        clientY <= editorRect.bottom
+      );
+    }
+  });
 
   // Cross-browser compatible function to get range from point
   const getRangeFromPoint = useCallback((x: number, y: number): Range | null => {
@@ -69,10 +106,12 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     return null;
   }, [editorElement]);
 
-  // Find the best insertion point between text lines with Google Docs-like precision
+  // Enhanced insertion point detection with coordinate precision
   const findInsertionPoint = useCallback((x: number, y: number) => {
     const editorRect = editorElement.getBoundingClientRect();
     const relativeY = y - editorRect.top;
+    
+    console.log('🎯 Finding insertion point:', { x, y, relativeY });
     
     // First, try to get precise line-level detection using range API
     try {
@@ -84,6 +123,8 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
           const lineY = rect.top - editorRect.top;
           const lineBottom = rect.bottom - editorRect.top;
           
+          console.log('📏 Range rect found:', { lineY, lineBottom, relativeY });
+          
           // Fine-grained line detection - check if we're between lines
           if (Math.abs(relativeY - lineY) < 5) {
             // Near top of line - insert before
@@ -91,6 +132,7 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
             if (element.nodeType === Node.TEXT_NODE && element.parentElement) {
               element = element.parentElement;
             }
+            console.log('⬆️ Inserting before line element');
             return { element: element as Element, insertBefore: true, isLineBoundary: true };
           } else if (Math.abs(relativeY - lineBottom) < 5) {
             // Near bottom of line - insert after
@@ -98,12 +140,13 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
             if (element.nodeType === Node.TEXT_NODE && element.parentElement) {
               element = element.parentElement;
             }
+            console.log('⬇️ Inserting after line element');
             return { element: element as Element, insertBefore: false, isLineBoundary: true };
           }
         }
       }
     } catch (error) {
-      // Fall back to block-level detection
+      console.log('⚠️ Range detection failed, falling back to block-level');
     }
     
     // Enhanced block-level detection with better text node awareness
@@ -171,6 +214,8 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     // Sort candidates by Y position for precise insertion
     candidates.sort((a, b) => a.rect.top - b.rect.top);
     
+    console.log('📋 Found candidates:', candidates.length);
+    
     // Find the best insertion point with fine-grained control
     let bestCandidate: {element: Node, insertBefore: boolean} | null = null;
     const tolerance = 8; // pixels of tolerance for line detection
@@ -183,12 +228,14 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
       // Check if we're very close to the top of this line/element
       if (Math.abs(relativeY - candidateY) <= tolerance && relativeY <= candidateY + tolerance) {
         bestCandidate = { element: candidate.element, insertBefore: true };
+        console.log('🎯 Found top insertion point');
         break;
       }
       
       // Check if we're very close to the bottom of this line/element  
       if (Math.abs(relativeY - candidateBottom) <= tolerance && relativeY >= candidateBottom - tolerance) {
         bestCandidate = { element: candidate.element, insertBefore: false };
+        console.log('🎯 Found bottom insertion point');
         break;
       }
       
@@ -204,8 +251,10 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
           
           if (distToCurrent <= distToNext) {
             bestCandidate = { element: candidate.element, insertBefore: false };
+            console.log('🎯 Found gap insertion point (closer to current)');
           } else {
             bestCandidate = { element: nextCandidate.element, insertBefore: true };
+            console.log('🎯 Found gap insertion point (closer to next)');
           }
           break;
         }
@@ -214,6 +263,7 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
       // If this is the last candidate and we're below it
       if (i === candidates.length - 1 && relativeY > candidateBottom) {
         bestCandidate = { element: candidate.element, insertBefore: false };
+        console.log('🎯 Found end insertion point');
         break;
       }
     }
@@ -237,6 +287,7 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
                        ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE'].includes(element.tagName);
         
         if (isBlock) {
+          console.log('✅ Found block element for insertion');
           return { 
             element: element, 
             insertBefore: bestCandidate.insertBefore,
@@ -251,6 +302,7 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     }
     
     // Fallback: insert at the end of the editor
+    console.log('🔄 Using fallback insertion point');
     return { 
       element: editorElement.lastElementChild || editorElement, 
       insertBefore: false,
@@ -328,16 +380,22 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
         break;
         
       case 'topBottom':
-        img.style.display = 'block';
-        img.style.clear = 'both';
-        
-        // Apply alignment-specific margins
-        if (settings.alignment === 'left') {
-          img.style.margin = distance > 0 ? `${gap} auto ${gap} 0` : '0 auto 0 0';
-        } else if (settings.alignment === 'right') {
-          img.style.margin = distance > 0 ? `${gap} 0 ${gap} auto` : '0 0 0 auto';
-        } else {
+        if (settings.alignment === 'center') {
+          img.style.display = 'block';
+          img.style.clear = 'both';
           img.style.margin = distance > 0 ? `${gap} auto` : '0 auto';
+        } else {
+          // For left/right in topBottom mode, use float for proper text wrapping
+          img.style.display = 'block';
+          img.style.float = settings.alignment === 'left' ? 'left' : 'right';
+          img.style.clear = 'none'; // Allow floating
+          if (distance > 0) {
+            img.style.margin = settings.alignment === 'left' 
+              ? `0 ${gap} ${gap} 0`
+              : `0 0 ${gap} ${gap}`;
+          } else {
+            img.style.margin = '0';
+          }
         }
         
         // Force text reflow by triggering layout recalculation
@@ -365,321 +423,6 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     img.offsetHeight;
   }, [selectedImage]);
 
-  // Initialize image tracking
-  useEffect(() => {
-    if (!editorElement) return;
-
-    const updateImages = () => {
-      const imageElements = editorElement.querySelectorAll('img');
-      console.log('🖼️ Found images:', imageElements.length);
-      
-      imageElements.forEach((img) => {
-        // Make images interactive
-        if (!img.dataset.interactive) {
-          img.dataset.interactive = 'true';
-          img.style.cursor = 'move';
-          img.style.userSelect = 'none';
-          img.draggable = false;
-
-          // Add click handler for selection
-          img.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🎯 Image clicked:', img.src.substring(0, 50));
-            handleImageSelect(img);
-          });
-
-          // Add drag functionality directly to image
-          let dragStarted = false;
-          let dragThreshold = 5; // pixels to move before starting drag
-          
-          img.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Select the image first
-            handleImageSelect(img);
-            
-            const startX = e.clientX;
-            const startY = e.clientY;
-            const startPosition = img.getBoundingClientRect();
-            const editorRect = editorElement.getBoundingClientRect();
-            dragStarted = false;
-
-            const handleMouseMove = (e: MouseEvent) => {
-              const deltaX = e.clientX - startX;
-              const deltaY = e.clientY - startY;
-              const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-              
-              // Only start dragging after moving threshold distance
-              if (!dragStarted && distance > dragThreshold) {
-                dragStarted = true;
-                document.body.style.cursor = 'move';
-                document.body.style.userSelect = 'none';
-                setIsDragging(true);
-                // Close settings menu when dragging starts
-                setShowWrapOptions(false);
-                
-                console.log('🎯 Starting image drag with smooth placeholder');
-              }
-              
-              if (dragStarted) {
-                // Get editor bounds for calculations
-                const editorRect = editorElement.getBoundingClientRect();
-                
-                // Calculate new position relative to editor
-                const newX = startPosition.left - editorRect.left + deltaX;
-                const newY = startPosition.top - editorRect.top + deltaY;
-                
-                // Apply temporary absolute positioning for smooth dragging
-                img.style.position = 'absolute';
-                img.style.left = `${Math.max(0, newX)}px`;
-                img.style.top = `${Math.max(0, newY)}px`;
-                img.style.transform = 'none';
-                img.style.zIndex = '1000';
-                img.style.opacity = '0.7';
-                
-                // Track drag position for alignment determination
-                setDragPosition({ x: e.clientX, y: e.clientY });
-                
-                // Update drop indicator position with smooth movement
-                const isInsideEditor = e.clientX >= editorRect.left && 
-                                     e.clientX <= editorRect.right && 
-                                     e.clientY >= editorRect.top && 
-                                     e.clientY <= editorRect.bottom;
-                
-                let existingPlaceholder = document.getElementById('drag-placeholder');
-                
-                if (isInsideEditor) {
-                  const result = findInsertionPoint(e.clientX, e.clientY);
-                  const { element: targetElement, insertBefore, isLineBoundary } = result;
-                  
-                  if (targetElement) {
-                    // Create or update placeholder with enhanced styling
-                    if (!existingPlaceholder) {
-                      existingPlaceholder = document.createElement('div');
-                      existingPlaceholder.id = 'drag-placeholder';
-                    }
-                    
-                    // Update placeholder style based on precision level
-                    const isHighPrecision = isLineBoundary;
-                    existingPlaceholder.style.cssText = `
-                      height: ${isHighPrecision ? '1px' : '2px'};
-                      background: ${isHighPrecision 
-                        ? 'linear-gradient(90deg, #10b981, #059669)' 
-                        : 'linear-gradient(90deg, #3b82f6, #1d4ed8)'};
-                      border-radius: ${isHighPrecision ? '0.5px' : '1px'};
-                      margin: ${isHighPrecision ? '2px 0' : '4px 0'};
-                      opacity: 0;
-                      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
-                      box-shadow: ${isHighPrecision 
-                        ? '0 0 8px rgba(16, 185, 129, 0.6), 0 1px 2px rgba(0, 0, 0, 0.1)'
-                        : '0 0 12px rgba(59, 130, 246, 0.5), 0 2px 4px rgba(0, 0, 0, 0.1)'};
-                      transform: scaleX(0);
-                      transform-origin: left center;
-                      position: relative;
-                      pointer-events: none;
-                    `;
-                    
-                    // Position the placeholder with improved logic
-                    try {
-                      let insertionSuccessful = false;
-                      
-                      if (insertBefore) {
-                        if (targetElement.parentNode) {
-                          targetElement.parentNode.insertBefore(existingPlaceholder, targetElement);
-                          insertionSuccessful = true;
-                        }
-                      } else {
-                        if (targetElement.parentNode) {
-                          targetElement.parentNode.insertBefore(existingPlaceholder, targetElement.nextSibling);
-                          insertionSuccessful = true;
-                        } else if (targetElement === editorElement) {
-                          // Special case: inserting at the end of editor
-                          editorElement.appendChild(existingPlaceholder);
-                          insertionSuccessful = true;
-                        }
-                      }
-                      
-                      // Animate the placeholder with staggered timing for smoothness
-                      if (insertionSuccessful) {
-                        requestAnimationFrame(() => {
-                          if (existingPlaceholder) {
-                            existingPlaceholder.style.opacity = isHighPrecision ? '0.95' : '0.85';
-                            existingPlaceholder.style.transform = 'scaleX(1)';
-                            
-                            // Add subtle pulse for high precision
-                            if (isHighPrecision) {
-                              existingPlaceholder.style.animation = 'pulse 1s ease-in-out infinite alternate';
-                            }
-                          }
-                        });
-                      }
-                    } catch (error) {
-                      // Fallback: append to editor root
-                      try {
-                        if (existingPlaceholder && editorElement) {
-                          editorElement.appendChild(existingPlaceholder);
-                          requestAnimationFrame(() => {
-                            if (existingPlaceholder) {
-                              existingPlaceholder.style.opacity = '0.7';
-                              existingPlaceholder.style.transform = 'scaleX(1)';
-                            }
-                          });
-                        }
-                      } catch (fallbackError) {
-                        console.log('Could not insert placeholder:', fallbackError);
-                      }
-                    }
-                  }
-                } else {
-                  // Remove placeholder if cursor is outside editor
-                  if (existingPlaceholder) {
-                    existingPlaceholder.style.transform = 'scaleX(0)';
-                    existingPlaceholder.style.opacity = '0';
-                    setTimeout(() => {
-                      if (existingPlaceholder && existingPlaceholder.parentNode) {
-                        existingPlaceholder.remove();
-                      }
-                    }, 150);
-                  }
-                }
-                
-                // Throttle overlay updates during drag
-                if (throttleTimeoutRef.current) {
-                  clearTimeout(throttleTimeoutRef.current);
-                }
-                throttleTimeoutRef.current = setTimeout(() => {
-                  setUpdateTrigger(prev => prev + 1);
-                }, 16); // ~60fps
-              }
-            };
-
-            const handleMouseUp = (e: MouseEvent) => {
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-              document.body.style.cursor = '';
-              document.body.style.userSelect = '';
-              setIsDragging(false);
-              setDragPosition(null);
-              
-              if (dragStarted) {
-                console.log('✅ Finished dragging image');
-                
-                // Find the best insertion point based on cursor position
-                const dropY = e.clientY;
-                const editorRect = editorElement.getBoundingClientRect();
-                const relativeY = dropY - editorRect.top;
-                
-                // Clean up drag placeholder
-                const placeholder = document.getElementById('drag-placeholder');
-                if (placeholder) {
-                  placeholder.remove();
-                }
-                
-                // Clear temporary drag positioning
-                img.style.position = '';
-                img.style.left = '';
-                img.style.top = '';
-                img.style.zIndex = '';
-                img.style.opacity = ''; // Restore full opacity
-                
-                // Find the closest text node or element to insert the image
-                const range = getRangeFromPoint(e.clientX, e.clientY);
-                if (range && range.startContainer) {
-                  try {
-                    // Find the best insertion point
-                    let insertionPoint = range.startContainer;
-                    
-                    // If we're in a text node, go to its parent
-                    if (insertionPoint.nodeType === Node.TEXT_NODE && insertionPoint.parentNode) {
-                      insertionPoint = insertionPoint.parentNode;
-                    }
-                    
-                    // If the insertion point is within the editor, move the image there
-                    if (editorElement.contains(insertionPoint as Node)) {
-                      try {
-                        // Find the best insertion target - look for paragraph elements
-                        let targetElement = insertionPoint as Element;
-                        while (targetElement && targetElement !== editorElement && 
-                               !['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(targetElement.tagName)) {
-                          const parent = targetElement.parentElement;
-                          if (!parent) break;
-                          targetElement = parent;
-                        }
-                        
-                        if (targetElement && targetElement.parentNode) {
-                          // Create a new paragraph for the image
-                          const wrapper = document.createElement('p');
-                          wrapper.appendChild(img);
-                          
-                          // Insert after the target element
-                          targetElement.parentNode.insertBefore(wrapper, targetElement.nextSibling);
-                        } else {
-                          // Fallback: append to editor
-                          const wrapper = document.createElement('p');
-                          wrapper.appendChild(img);
-                          editorElement.appendChild(wrapper);
-                        }
-                      } catch (error) {
-                        console.log('Drop insertion failed, keeping image in place:', error);
-                        // If all else fails, just keep the image where it was
-                      }
-                    }
-                  } catch (error) {
-                    console.log('📍 Could not determine drop location, keeping current position');
-                  }
-                }
-                
-                // Determine alignment based on drop position
-                const targetAlignment = getAlignmentFromPosition(e.clientX) as TextAlignment;
-                console.log('🎯 Drop alignment determined:', targetAlignment);
-                
-                // Apply settings based on alignment and maintain position
-                const dropSettings: TextWrapSettings = {
-                  mode: targetAlignment === 'center' ? 'topBottom' : 'square',
-                  alignment: targetAlignment,
-                  distanceFromText: 15
-                };
-                
-                setWrapSettings(dropSettings);
-                
-                setTimeout(() => {
-                  applyWrapSettings(dropSettings, img);
-                  setUpdateTrigger(prev => prev + 1);
-                  console.log('🎨 Applied alignment after drop:', dropSettings);
-                }, 10);
-              }
-              dragStarted = false;
-            };
-
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-          });
-        }
-      });
-    };
-
-    // Initial setup
-    updateImages();
-
-    // Watch for changes in the editor
-    const observer = new MutationObserver(() => {
-      console.log('🔄 DOM changed, updating images');
-      updateImages();
-    });
-    observer.observe(editorElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['src']
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [editorElement]);
-
   const handleImageSelect = useCallback((img: HTMLImageElement) => {
     console.log('✅ Selecting image:', img.src.substring(0, 50));
     setSelectedImage(img);
@@ -692,10 +435,10 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     // Check float property first
     if (computedStyle.float === 'left') {
       currentAlignment = 'left';
-      currentMode = 'square';
+      currentMode = 'topBottom'; // Use topBottom for floating images
     } else if (computedStyle.float === 'right') {
       currentAlignment = 'right';
-      currentMode = 'square';
+      currentMode = 'topBottom'; // Use topBottom for floating images
     } else if (computedStyle.display === 'block') {
       // Check margin for alignment hints
       const marginLeft = computedStyle.marginLeft;
@@ -726,6 +469,326 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     
     setUpdateTrigger(prev => prev + 1); // Force re-render
   }, []);
+
+  // Initialize image tracking
+  useEffect(() => {
+    if (!editorElement) return;
+
+    const updateImages = () => {
+      const imageElements = editorElement.querySelectorAll('img');
+      console.log('🖼️ Found images:', imageElements.length);
+      
+      imageElements.forEach((img) => {
+        // Make images interactive
+        if (!img.dataset.interactive) {
+          img.dataset.interactive = 'true';
+          img.style.cursor = 'move';
+          img.style.userSelect = 'none';
+          img.draggable = false;
+
+          // Add click handler for selection
+          img.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 Image clicked:', img.src.substring(0, 50));
+            handleImageSelect(img);
+          });
+
+          // Add drag functionality with enhanced coordinate mapping
+          let dragStarted = false;
+          let dragThreshold = 5; // pixels to move before starting drag
+          
+          img.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Select the image first
+            handleImageSelect(img);
+            
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startPosition = img.getBoundingClientRect();
+            const editorRect = editorElement.getBoundingClientRect();
+            dragStarted = false;
+
+            // Store precise start coordinates for accurate drop calculation
+            dragStartPositionRef.current = {
+              x: startX,
+              y: startY
+            };
+
+            const handleMouseMove = (e: MouseEvent) => {
+              const deltaX = e.clientX - startX;
+              const deltaY = e.clientY - startY;
+              const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+              
+              // Only start dragging after moving threshold distance
+              if (!dragStarted && distance > dragThreshold) {
+                dragStarted = true;
+                document.body.style.cursor = 'move';
+                document.body.style.userSelect = 'none';
+                setIsDragging(true);
+                // Close settings menu when dragging starts
+                setShowWrapOptions(false);
+                
+                console.log('🎯 Starting enhanced drag with precise coordinates');
+              }
+              
+              if (dragStarted) {
+                // Get editor bounds for calculations with precise coordinate mapping
+                const currentEditorRect = editorElement.getBoundingClientRect();
+                
+                // Use coordinate mapper for precise positioning
+                const preciseCoords = coordinateMapper.current.getPreciseDropCoordinates(e.clientX, e.clientY);
+                
+                // Apply direct positioning without transform to prevent coordinate drift
+                img.style.position = 'fixed'; // Use fixed instead of absolute for precise pixel alignment
+                img.style.left = `${e.clientX - (startX - startPosition.left)}px`;
+                img.style.top = `${e.clientY - (startY - startPosition.top)}px`;
+                img.style.transform = 'none';
+                img.style.zIndex = '1000';
+                img.style.opacity = '0.8';
+                
+                // Track drag position for alignment determination with enhanced precision
+                setDragPosition({ x: e.clientX, y: e.clientY });
+                
+                // Update drop indicator position with coordinate mapping
+                const isInsideEditor = coordinateMapper.current.isWithinBounds(e.clientX, e.clientY);
+                
+                let existingPlaceholder = document.getElementById('drag-placeholder');
+                
+                if (isInsideEditor) {
+                  const result = findInsertionPoint(e.clientX, e.clientY);
+                  const { element: targetElement, insertBefore, isLineBoundary } = result;
+                  
+                  console.log('🎯 Drop target found:', { targetElement: targetElement.tagName, insertBefore, isLineBoundary });
+                  
+                  if (targetElement) {
+                    // Create or update placeholder with enhanced styling
+                    if (!existingPlaceholder) {
+                      existingPlaceholder = document.createElement('div');
+                      existingPlaceholder.id = 'drag-placeholder';
+                    }
+                    
+                    // Update placeholder style based on precision level
+                    const isHighPrecision = isLineBoundary;
+                    existingPlaceholder.style.cssText = `
+                      height: ${isHighPrecision ? '1px' : '2px'};
+                      background: ${isHighPrecision 
+                        ? 'linear-gradient(90deg, #10b981, #059669)' 
+                        : 'linear-gradient(90deg, #3b82f6, #1d4ed8)'};
+                      border-radius: ${isHighPrecision ? '0.5px' : '1px'};
+                      margin: ${isHighPrecision ? '2px 0' : '4px 0'};
+                      opacity: 0;
+                      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+                      box-shadow: ${isHighPrecision 
+                        ? '0 0 8px rgba(16, 185, 129, 0.8), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                        : '0 0 12px rgba(59, 130, 246, 0.6), 0 2px 4px rgba(0, 0, 0, 0.1)'};
+                      transform: scaleX(0);
+                      transform-origin: left center;
+                      position: relative;
+                      pointer-events: none;
+                    `;
+                    
+                    // Position the placeholder with improved logic and coordinate precision
+                    try {
+                      let insertionSuccessful = false;
+                      
+                      if (insertBefore) {
+                        if (targetElement.parentNode) {
+                          targetElement.parentNode.insertBefore(existingPlaceholder, targetElement);
+                          insertionSuccessful = true;
+                        }
+                      } else {
+                        if (targetElement.parentNode) {
+                          targetElement.parentNode.insertBefore(existingPlaceholder, targetElement.nextSibling);
+                          insertionSuccessful = true;
+                        } else if (targetElement === editorElement) {
+                          // Special case: inserting at the end of editor
+                          editorElement.appendChild(existingPlaceholder);
+                          insertionSuccessful = true;
+                        }
+                      }
+                      
+                      // Animate the placeholder with enhanced timing
+                      if (insertionSuccessful) {
+                        requestAnimationFrame(() => {
+                          if (existingPlaceholder) {
+                            existingPlaceholder.style.opacity = isHighPrecision ? '0.95' : '0.85';
+                            existingPlaceholder.style.transform = 'scaleX(1)';
+                            
+                            // Add subtle pulse for high precision
+                            if (isHighPrecision) {
+                              existingPlaceholder.style.animation = 'pulse 0.8s ease-in-out infinite alternate';
+                            }
+                          }
+                        });
+                      }
+                    } catch (error) {
+                      console.log('⚠️ Could not insert placeholder:', error);
+                      // Fallback: append to editor root
+                      try {
+                        if (existingPlaceholder && editorElement) {
+                          editorElement.appendChild(existingPlaceholder);
+                          requestAnimationFrame(() => {
+                            if (existingPlaceholder) {
+                              existingPlaceholder.style.opacity = '0.7';
+                              existingPlaceholder.style.transform = 'scaleX(1)';
+                            }
+                          });
+                        }
+                      } catch (fallbackError) {
+                        console.log('❌ Placeholder insertion fallback failed:', fallbackError);
+                      }
+                    }
+                  }
+                } else {
+                  // Remove placeholder if cursor is outside editor
+                  if (existingPlaceholder) {
+                    existingPlaceholder.style.transform = 'scaleX(0)';
+                    existingPlaceholder.style.opacity = '0';
+                    setTimeout(() => {
+                      if (existingPlaceholder && existingPlaceholder.parentNode) {
+                        existingPlaceholder.remove();
+                      }
+                    }, 150);
+                  }
+                }
+                
+                // Throttle overlay updates during drag for performance
+                if (throttleTimeoutRef.current) {
+                  clearTimeout(throttleTimeoutRef.current);
+                }
+                throttleTimeoutRef.current = setTimeout(() => {
+                  setUpdateTrigger(prev => prev + 1);
+                }, 16); // ~60fps
+              }
+            };
+
+            const handleMouseUp = (e: MouseEvent) => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+              document.body.style.cursor = '';
+              document.body.style.userSelect = '';
+              setIsDragging(false);
+              setDragPosition(null);
+              
+              if (dragStarted) {
+                console.log('✅ Finished drag with enhanced coordinates');
+                
+                // Get precise drop coordinates using enhanced coordinate mapper
+                const finalCoords = coordinateMapper.current.getPreciseDropCoordinates(e.clientX, e.clientY);
+                console.log('📍 Final drop coordinates:', finalCoords);
+                
+                // Clean up drag placeholder
+                const placeholder = document.getElementById('drag-placeholder');
+                if (placeholder) {
+                  placeholder.remove();
+                }
+                
+                // Clear temporary drag positioning
+                img.style.position = '';
+                img.style.left = '';
+                img.style.top = '';
+                img.style.zIndex = '';
+                img.style.opacity = ''; // Restore full opacity
+                
+                // Find insertion point using the exact drop coordinates  
+                const range = getRangeFromPoint(e.clientX, e.clientY);
+                if (range && range.startContainer) {
+                  try {
+                    // Find the best insertion point using enhanced detection
+                    const insertionResult = findInsertionPoint(e.clientX, e.clientY);
+                    const { element: targetElement, insertBefore } = insertionResult;
+                    
+                    console.log('🎯 Final insertion target:', { 
+                      element: targetElement.tagName, 
+                      insertBefore,
+                      dropCoords: finalCoords 
+                    });
+                    
+                    // If the insertion point is within the editor, move the image there
+                    if (editorElement.contains(targetElement as Node)) {
+                      try {
+                        // Create a new paragraph for the image to ensure proper layout
+                        const wrapper = document.createElement('p');
+                        wrapper.appendChild(img);
+                        
+                        if (insertBefore) {
+                          if (targetElement.parentNode) {
+                            targetElement.parentNode.insertBefore(wrapper, targetElement);
+                            console.log('✅ Inserted image before target element');
+                          } else {
+                            editorElement.appendChild(wrapper);
+                            console.log('✅ Appended image to editor (no parent)');
+                          }
+                        } else {
+                          if (targetElement.parentNode) {
+                            targetElement.parentNode.insertBefore(wrapper, targetElement.nextSibling);
+                            console.log('✅ Inserted image after target element');
+                          } else {
+                            editorElement.appendChild(wrapper);
+                            console.log('✅ Appended image to editor (end)');
+                          }
+                        }
+                      } catch (error) {
+                        console.log('❌ Drop insertion failed, keeping image in place:', error);
+                        // If all else fails, just keep the image where it was
+                      }
+                    }
+                  } catch (error) {
+                    console.log('⚠️ Could not determine precise drop location:', error);
+                  }
+                }
+                
+                // Determine alignment based on precise drop position
+                const targetAlignment = getAlignmentFromPosition(e.clientX) as TextAlignment;
+                console.log('🎯 Drop alignment determined with precision:', targetAlignment);
+                
+                // Apply settings based on alignment - use topBottom for all alignments since it handles floating properly
+                const dropSettings: TextWrapSettings = {
+                  mode: 'topBottom', // topBottom mode now handles all alignments including floating left/right
+                  alignment: targetAlignment,
+                  distanceFromText: 15
+                };
+                
+                setWrapSettings(dropSettings);
+                
+                setTimeout(() => {
+                  applyWrapSettings(dropSettings, img);
+                  setUpdateTrigger(prev => prev + 1);
+                  console.log('🎨 Applied precise alignment after drop:', dropSettings);
+                }, 10);
+              }
+              dragStarted = false;
+            };
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          });
+        }
+      });
+    };
+
+    // Initial setup
+    updateImages();
+
+    // Watch for changes in the editor
+    const observer = new MutationObserver(() => {
+      console.log('🔄 DOM changed, updating images');
+      updateImages();
+    });
+    observer.observe(editorElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['src']
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [editorElement, handleImageSelect, findInsertionPoint, getRangeFromPoint, getAlignmentFromPosition, applyWrapSettings]);
 
   // High-frequency position monitoring for selected image
   useEffect(() => {
@@ -799,30 +862,21 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
     }
 
     const imgRect = img.getBoundingClientRect();
-    const editorRect = editorElement.getBoundingClientRect();
     const overlayRect = overlayRef.current.getBoundingClientRect();
     
-    // Calculate position relative to the editor, then relative to overlay
-    const relativeToEditor = {
-      x: imgRect.left - editorRect.left,
-      y: imgRect.top - editorRect.top,
-      width: imgRect.width,
-      height: imgRect.height
-    };
-    
-    // Convert to overlay coordinate system
+    // Calculate position relative to the overlay container
+    // The overlay is positioned absolutely within its container, so we need
+    // to calculate the image position relative to the overlay's coordinate system
     const position = {
-      x: Math.round(relativeToEditor.x + editorRect.left - overlayRect.left),
-      y: Math.round(relativeToEditor.y + editorRect.top - overlayRect.top),
-      width: Math.round(relativeToEditor.width),
-      height: Math.round(relativeToEditor.height)
+      x: Math.round(imgRect.left - overlayRect.left),
+      y: Math.round(imgRect.top - overlayRect.top),
+      width: Math.round(imgRect.width),
+      height: Math.round(imgRect.height)
     };
     
-    console.log('📏 Image position calculation:', {
+    console.log('📏 Fixed image position calculation:', {
       imgRect: { x: imgRect.left, y: imgRect.top, w: imgRect.width, h: imgRect.height },
-      editorRect: { x: editorRect.left, y: editorRect.top, w: editorRect.width, h: editorRect.height },
       overlayRect: { x: overlayRect.left, y: overlayRect.top, w: overlayRect.width, h: overlayRect.height },
-      relativeToEditor,
       finalPosition: position
     });
     
@@ -933,7 +987,7 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
               }}
             >
               {isDragging && dragPosition ? (
-                `Drop: ${getAlignmentFromPosition(dragPosition.x)} | ${pos.width}×${pos.height}`
+                `Drop: ${getAlignmentFromPosition(dragPosition.x)} | ${pos.width}×${pos.height} | Precise`
               ) : (
                 `${wrapSettings.mode}:${wrapSettings.alignment} | ${pos.width}×${pos.height}`
               )}
@@ -1193,8 +1247,8 @@ export const ImageOverlay: React.FC<ImageOverlayProps> = ({ editorElement }) => 
                   ))}
                 </div>
 
-                {/* Alignment options for square mode */}
-                {wrapSettings.mode === 'square' && (
+                {/* Alignment options for square and topBottom modes */}
+                {(wrapSettings.mode === 'square' || wrapSettings.mode === 'topBottom') && (
                   <div className="pt-1">
                     <div className="flex gap-1">
                       {(['left', 'right', 'center'] as TextAlignment[]).map((align) => (

@@ -1,8 +1,21 @@
 'use client';
 
-import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
+import React, { useRef, useEffect, useState, forwardRef } from 'react';
 import { useSemanticColors } from '@/theme';
-import { ModularImageOverlayWrapper as ImageOverlay } from '../image-interaction/components/ModularImageOverlayWrapper';
+import { ImageEnhancer } from '../utils/ImageEnhancer';
+import { ImageOverlay } from '../image-interaction/components/ImageOverlay';
+import { MovableImage } from '../image-interaction/text-wrapping/components/MovableImage';
+import { MovableImageData, ImagePosition, TextWrapSettings } from '../image-interaction/text-wrapping/types';
+import '../styles/editor.css';
+          addMovableImage(base64Url, file.name, {
+            x: dropX,
+            y: dropY,
+            width: 300,
+            height: 200
+          });
+          
+          console.log('✅ Created movable image at position:', { x: dropX, y: dropY }); '../utils/ImageEnhancer';
+import { ImageOverlay } from '../image-interaction/components/ImageOverlay';
 import { MovableImage } from '../image-interaction/text-wrapping/components/MovableImage';
 import { MovableImageData, ImagePosition, TextWrapSettings } from '../image-interaction/text-wrapping/types';
 import '../styles/editor.css';
@@ -36,38 +49,36 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
   // Image management functions
-  const updateImagePosition = useCallback((imageId: string, newPosition: ImagePosition) => {
+  const updateImagePosition = (imageId: string, newPosition: ImagePosition) => {
     setMovableImages(prev => prev.map(img => 
       img.id === imageId 
         ? { ...img, position: newPosition }
         : img
     ));
-  }, []);
+  };
 
-  const updateImageWrapSettings = useCallback((imageId: string, newWrapSettings: TextWrapSettings) => {
+  const updateImageWrapSettings = (imageId: string, newWrapSettings: TextWrapSettings) => {
     setMovableImages(prev => prev.map(img => 
       img.id === imageId 
         ? { ...img, wrapSettings: newWrapSettings }
         : img
     ));
-  }, []);
+  };
 
-  const deleteImage = useCallback((imageId: string) => {
+  const deleteImage = (imageId: string) => {
     setMovableImages(prev => prev.filter(img => img.id !== imageId));
     if (selectedImageId === imageId) {
       setSelectedImageId(null);
     }
-  }, [selectedImageId]);
+  };
 
-  const addMovableImage = useCallback((src: string, alt: string = '', position?: Partial<ImagePosition>) => {
+  const addMovableImage = (src: string, alt: string = '', position?: Partial<ImagePosition>) => {
     const defaultPosition: ImagePosition = {
       x: position?.x ?? 100,
       y: position?.y ?? 100,
       width: position?.width ?? 300,
       height: position?.height ?? 200
     };
-    
-    console.log('🖼️ Adding movable image with position:', defaultPosition);
 
     const newImage: MovableImageData = {
       id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -83,50 +94,9 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
     };
 
     setMovableImages(prev => [...prev, newImage]);
-    
-    // Force selection after a short delay to ensure component is rendered
-    setTimeout(() => {
-      setSelectedImageId(newImage.id);
-      console.log('🎯 MovableImage selected:', newImage.id);
-    }, 50);
-    
-    console.log('🖼️ Created movable image with ID:', newImage.id, 'and position:', newImage.position);
+    setSelectedImageId(newImage.id);
     return newImage.id;
-  }, [movableImages.length]);
-
-  // Expose addMovableImage globally for toolbar access
-  useEffect(() => {
-    (window as any).insertMovableImageAtPosition = (src: string, alt: string = '', position?: { x: number, y: number, width?: number, height?: number }) => {
-      return addMovableImage(src, alt, position);
-    };
-
-    // Listen for auto-open settings events
-    const handleAutoOpenSettings = (event: CustomEvent) => {
-      const { imageId } = event.detail;
-      console.log('Auto-opening settings for image:', imageId);
-      
-      // Select the image and trigger settings after a short delay
-      setTimeout(() => {
-        setSelectedImageId(imageId);
-        
-        // Find the image in our state and auto-open its settings
-        const targetImage = movableImages.find(img => img.id === imageId);
-        if (targetImage) {
-          // Trigger settings opening by dispatching a custom event to the MovableImage
-          const settingsEvent = new CustomEvent('autoOpenSettings', {
-            detail: { imageId }
-          });
-          window.dispatchEvent(settingsEvent);
-        }
-      }, 100);
-    };
-
-    window.addEventListener('openMovableImageSettings', handleAutoOpenSettings as EventListener);
-    
-    return () => {
-      window.removeEventListener('openMovableImageSettings', handleAutoOpenSettings as EventListener);
-    };
-  }, [addMovableImage, movableImages]);
+  };
 
   const editorStyle = {
     padding: '48px',
@@ -137,7 +107,7 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
     transformOrigin: 'top center',
   };
 
-  const pageStyle: React.CSSProperties = {
+  const pageStyle = {
     maxWidth: '816px', // A4 width at 96 DPI
     margin: '0 auto',
     backgroundColor: semanticColors.surface.primary,
@@ -145,14 +115,10 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
     borderRadius: '8px',
     padding: '96px 72px', // 1 inch margins
     minHeight: '1056px', // A4 height at 96 DPI
-    position: 'relative',
+    border: isDragOver ? '2px dashed #3b82f6' : 'none',
   };
 
-  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const content = e.currentTarget.innerHTML;
-    onContentChange?.(content);
-  };
-
+  // Handle drag and drop for images
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -192,6 +158,7 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
 
     // Import utilities dynamically
     try {
+      const EditorUtils = await import('../utils/EditorUtils');
       const imageUtils = await import('../utils/imageUtils');
 
       for (const file of imageFiles) {
@@ -201,78 +168,75 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
           // Convert to base64 for immediate display
           const base64Url = await imageUtils.fileToBase64(file);
           
-          // Calculate drop position relative to editor
-          const rect = e.currentTarget.getBoundingClientRect();
-          const dropX = e.clientX - rect.left;
-          const dropY = e.clientY - rect.top;
+          // Insert image directly into editor
+          const imageHtml = `<img src="${base64Url}" alt="${file.name}" title="${file.name}" style="max-width: 100%; height: auto; cursor: move;" />`;
+          EditorUtils.EditorUtils.insertImageAtCursor(imageHtml);
           
-          // Create movable image instead of static HTML
-          addMovableImage(base64Url, file.name, {
-            x: dropX,
-            y: dropY,
-            width: 300,
-            height: 200
-          });
-          
-          console.log('✅ Created movable image at position:', { x: dropX, y: dropY });
+          console.log('✅ Successfully inserted dropped image');
         } catch (error) {
-          console.error('❌ Error processing image:', error);
+          console.error('❌ Failed to insert dropped image:', error);
         }
       }
     } catch (error) {
-      console.error('❌ Error importing utilities:', error);
+      console.error('❌ Failed to import utilities:', error);
     }
   };
 
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    if (onContentChange && editorRef.current) {
+      onContentChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleSelectionChange = () => {
+    if (onSelectionChange) {
+      const selection = window.getSelection();
+      onSelectionChange(selection);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [onSelectionChange]);
+
   // Update editor content when content prop changes
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== content) {
+    if (editorRef.current && content !== editorRef.current.innerHTML) {
       editorRef.current.innerHTML = content;
+    }
+    if (previewRef.current && content !== previewRef.current.innerHTML) {
+      previewRef.current.innerHTML = content;
     }
   }, [content]);
 
-  // Handle selection changes
+  // Initialize ImageEnhancer for the editor
   useEffect(() => {
-    const handleSelectionChange = () => {
-      const selection = window.getSelection();
-      onSelectionChange?.(selection);
-    };
-
-    document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [onSelectionChange]);
+    if (editorRef.current && !readOnly) {
+      const enhancer = new ImageEnhancer();
+      // Temporarily disabled for debugging
+      // enhancer.initialize();
+      
+      return () => {
+        // enhancer.destroy();
+      };
+    }
+  }, [readOnly]);
 
   if (viewMode === 'split') {
     return (
       <div ref={ref} className={`flex ${className}`}>
-        <div className="flex-1 overflow-auto" style={editorStyle}>
+        {/* Editor Side */}
+        <div className="flex-1 overflow-auto border-r relative" style={{ borderColor: semanticColors.border.primary }}>
           <div 
-            style={pageStyle}
+            style={editorStyle}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="relative" style={{ minHeight: '100%' }}>
-              {/* Inline movable images for text wrapping modes */}
-              {movableImages
-                .filter(img => ['inline', 'square', 'tight', 'topBottom'].includes(img.wrapSettings.mode))
-                .map((image) => (
-                <MovableImage
-                  key={`inline-${image.id}`}
-                  imageId={image.id}
-                  src={image.src}
-                  alt={image.alt}
-                  initialPosition={image.position}
-                  initialWrapSettings={image.wrapSettings}
-                  isSelected={selectedImageId === image.id}
-                  onSelect={() => setSelectedImageId(image.id)}
-                  onPositionChange={(position) => updateImagePosition(image.id, position)}
-                  onWrapSettingsChange={(settings) => updateImageWrapSettings(image.id, settings)}
-                  onDelete={() => deleteImage(image.id)}
-                  editorElement={editorRef.current || undefined}
-                />
-              ))}
-              
+            <div style={pageStyle}>
               <div
                 ref={editorRef}
                 contentEditable={!readOnly}
@@ -283,71 +247,30 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
                   fontSize: '16px',
                   lineHeight: 1.6,
                   outline: 'none',
-                  minHeight: '100%',
-                  position: 'relative',
-                  zIndex: 1
                 }}
                 className="prose prose-lg max-w-none focus:outline-none"
-                onClick={() => setSelectedImageId(null)}
               />
-              
-              {/* Absolutely positioned images (overlay modes) */}
-              {movableImages
-                .filter(img => ['through', 'behindText', 'inFrontOfText'].includes(img.wrapSettings.mode))
-                .map((image) => (
-                <MovableImage
-                  key={`absolute-${image.id}`}
-                  imageId={image.id}
-                  src={image.src}
-                  alt={image.alt}
-                  initialPosition={image.position}
-                  initialWrapSettings={image.wrapSettings}
-                  isSelected={selectedImageId === image.id}
-                  onSelect={() => setSelectedImageId(image.id)}
-                  onPositionChange={(position) => updateImagePosition(image.id, position)}
-                  onWrapSettingsChange={(settings) => updateImageWrapSettings(image.id, settings)}
-                  onDelete={() => deleteImage(image.id)}
-                  editorElement={editorRef.current || undefined}
-                />
-              ))}
+              {editorRef.current && !readOnly && (
+                <ImageOverlay editorElement={editorRef.current} />
+              )}
             </div>
-
-            {/* Selection Indicator */}
-            {selectedImageId && (
-              <div 
-                className="absolute top-2 right-2 px-3 py-1 rounded text-sm font-medium pointer-events-none"
-                style={{
-                  backgroundColor: semanticColors.action.primary,
-                  color: 'white',
-                  zIndex: 1004
-                }}
-              >
-                Image Selected ({movableImages.find(img => img.id === selectedImageId)?.wrapSettings.mode})
-              </div>
-            )}
-
-            {/* Drag over indicator */}
-            {isDragOver && (
-              <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50 bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
-                  Drop image here to insert
-                </div>
-              </div>
-            )}
           </div>
         </div>
-        
-        <div className="flex-1 overflow-auto bg-gray-50" style={editorStyle}>
-          <div style={pageStyle}>
-            <div
-              ref={previewRef}
-              dangerouslySetInnerHTML={{ __html: content }}
-              style={{
-                fontSize: '16px',
-                lineHeight: 1.6,
-              }}
-              className="prose prose-lg max-w-none"
-            />
+
+        {/* Preview Side */}
+        <div className="flex-1 overflow-auto">
+          <div style={editorStyle}>
+            <div style={pageStyle}>
+              <div
+                ref={previewRef}
+                dangerouslySetInnerHTML={{ __html: content }}
+                style={{
+                  fontSize: '16px',
+                  lineHeight: 1.6,
+                }}
+                className="prose prose-lg max-w-none"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -388,7 +311,6 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
             .map((image) => (
             <MovableImage
               key={`inline-${image.id}`}
-              imageId={image.id}
               src={image.src}
               alt={image.alt}
               initialPosition={image.position}
@@ -426,7 +348,6 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
             .map((image) => (
             <MovableImage
               key={`absolute-${image.id}`}
-              imageId={image.id}
               src={image.src}
               alt={image.alt}
               initialPosition={image.position}
@@ -440,31 +361,6 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
             />
           ))}
         </div>
-
-        {/* Selection Indicator */}
-        {selectedImageId && (
-          <div 
-            className="absolute top-2 right-2 px-3 py-1 rounded text-sm font-medium pointer-events-none"
-            style={{
-              backgroundColor: semanticColors.action.primary,
-              color: 'white',
-              zIndex: 1004
-            }}
-          >
-            Image Selected ({movableImages.find(img => img.id === selectedImageId)?.wrapSettings.mode})
-          </div>
-        )}
-
-        {/* Drag over indicator */}
-        {isDragOver && (
-          <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
-              Drop image here to insert
-            </div>
-          </div>
-        )}
-
-        {/* Modular ImageOverlay for existing static images */}
         {editorRef.current && !readOnly && (
           <ImageOverlay editorElement={editorRef.current} />
         )}
@@ -474,3 +370,23 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
 });
 
 EditorCanvas.displayName = 'EditorCanvas';
+
+// CSS for placeholder
+const placeholderCSS = `
+  [data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: #9CA3AF;
+    pointer-events: none;
+  }
+  
+  [data-placeholder]:empty:focus::before {
+    content: '';
+  }
+`;
+
+// Inject placeholder CSS
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = placeholderCSS;
+  document.head.appendChild(styleElement);
+}
