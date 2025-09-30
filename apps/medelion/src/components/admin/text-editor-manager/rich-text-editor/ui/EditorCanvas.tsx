@@ -235,9 +235,23 @@ export const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection();
-      onSelectionChange?.(selection);
+      if (!editorRef.current) {
+        onSelectionChange?.(null);
+        return;
+      }
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        // Check if selection is inside the editor
+        if (editorRef.current.contains(range.startContainer) && editorRef.current.contains(range.endContainer)) {
+          // Only trigger if actual text is selected
+          if (!range.collapsed && range.toString().trim().length > 0) {
+            onSelectionChange?.(selection);
+            return;
+          }
+        }
+      }
+      onSelectionChange?.(null);
     };
-
     document.addEventListener('selectionchange', handleSelectionChange);
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
   }, [onSelectionChange]);

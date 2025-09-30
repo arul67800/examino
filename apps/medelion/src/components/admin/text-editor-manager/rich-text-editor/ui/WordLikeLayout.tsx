@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '@/theme';
 import { QuickAccessToolbar } from './QuickAccessToolbar';
 import { RibbonToolbar } from './RibbonToolbar';
@@ -8,6 +8,11 @@ import { EditorCanvas } from './EditorCanvas';
 import { StatusBar } from './StatusBar';
 import { ImageFile, ImageInsertOptions } from '../image-upload/types';
 import { EditorUtils } from '../utils/EditorUtils';
+import { BubbleMenu } from '../components/bubble-menu';
+import { WordTableIntegration } from '../table/WordTableIntegration';
+import { AdvancedContextMenu } from '../right-click-menu/components/AdvancedContextMenu';
+import { createEditorContextMenu, createTableContextMenu } from '../right-click-menu/utils/contextMenuConfigs';
+import { useAdvancedContextMenu } from '../right-click-menu/hooks/useAdvancedContextMenu';
 
 interface WordLikeLayoutProps {
   initialContent?: string;
@@ -37,6 +42,21 @@ export function WordLikeLayout({
   const [wordCount, setWordCount] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [readabilityScore, setReadabilityScore] = useState(85);
+
+  // Advanced Context Menu State
+  const { 
+    contextMenu, 
+    showContextMenu, 
+    hideContextMenu,
+    getCurrentOperations,
+    selectedCell
+  } = useAdvancedContextMenu(editorCanvasRef);
+
+  // Handle context menu opening - close bubble menu
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    setCurrentSelection(null); // Close bubble menu when context menu opens
+    showContextMenu(event);
+  }, [showContextMenu]);
 
   // Handle content changes
   const handleContentChange = useCallback((newContent: string) => {
@@ -70,6 +90,61 @@ export function WordLikeLayout({
     }
     // The RibbonToolbar will handle the actual HTML insertion via onCommand('insertHTML', ...)
   }, []);
+
+  // Handle table insertion
+  const handleTableInsert = useCallback((tableData: any) => {
+    console.log('🔥 Advanced table inserted:', tableData);
+    
+    // Add table-specific keyboard shortcuts and interactions
+    setTimeout(() => {
+      const tables = document.querySelectorAll('.advanced-table');
+      tables.forEach(table => {
+        // Add keyboard navigation
+        table.addEventListener('keydown', (e: any) => {
+          const target = e.target;
+          if (target.tagName === 'TD' || target.tagName === 'TH') {
+            switch (e.key) {
+              case 'Tab':
+                e.preventDefault();
+                const nextCell = e.shiftKey ? 
+                  target.previousElementSibling || target.parentElement?.previousElementSibling?.lastElementChild :
+                  target.nextElementSibling || target.parentElement?.nextElementSibling?.firstElementChild;
+                if (nextCell) nextCell.focus();
+                break;
+              case 'Enter':
+                e.preventDefault();
+                const belowCell = target.parentElement?.nextElementSibling?.children[target.cellIndex];
+                if (belowCell) belowCell.focus();
+                break;
+              case 'ArrowUp':
+                e.preventDefault();
+                const aboveCell = target.parentElement?.previousElementSibling?.children[target.cellIndex];
+                if (aboveCell) aboveCell.focus();
+                break;
+              case 'ArrowDown':
+                e.preventDefault();
+                const belowCell2 = target.parentElement?.nextElementSibling?.children[target.cellIndex];
+                if (belowCell2) belowCell2.focus();
+                break;
+            }
+          }
+        });
+        
+        // Add cell selection highlighting
+        const cells = table.querySelectorAll('td, th');
+        cells.forEach(cell => {
+          cell.addEventListener('focus', () => {
+            cells.forEach(c => c.classList.remove('selected-cell'));
+            cell.classList.add('selected-cell');
+          });
+        });
+      });
+    }, 200);
+    
+    // Update content to trigger re-render and word count update
+    const newContent = (document.querySelector('[contenteditable="true"]') as HTMLElement)?.innerHTML || content;
+    handleContentChange(newContent);
+  }, [content, handleContentChange]);
 
   // Handle ribbon commands
   const handleRibbonCommand = useCallback((command: string, value?: any) => {
@@ -110,6 +185,7 @@ export function WordLikeLayout({
         document.execCommand('fontSize', false, '7'); // Then adjust with CSS
         break;
       case 'insertTable':
+        // Legacy simple table - keeping for compatibility
         const tableHtml = `
           <table border="1" style="border-collapse: collapse; width: 100%; margin: 1rem 0;">
             <tr><td style="padding: 8px;">Cell 1</td><td style="padding: 8px;">Cell 2</td></tr>
@@ -117,6 +193,10 @@ export function WordLikeLayout({
           </table>
         `;
         document.execCommand('insertHTML', false, tableHtml);
+        break;
+      case 'insertAdvancedTable':
+        // This will be handled by the RibbonToolbar's table menu
+        console.log('Advanced table insertion triggered');
         break;
       case 'insertHTML':
         EditorUtils.insertHTMLAtCursor(value);
@@ -176,6 +256,76 @@ export function WordLikeLayout({
     flexDirection: 'column' as const,
   };
 
+  // Add click outside handler and table-specific styles
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const bubble = document.querySelector('.bubble-menu-root');
+      if (bubble && !bubble.contains(e.target as Node)) {
+        setCurrentSelection(null);
+      }
+    }
+    
+    // Add table-specific CSS styles
+    const tableStyles = `
+      <style>
+        .advanced-table-container {
+          position: relative;
+          margin: 20px 0;
+        }
+        
+        .advanced-table td:focus,
+        .advanced-table th:focus {
+          outline: 2px solid #3b82f6 !important;
+          outline-offset: -2px;
+          background-color: #eff6ff !important;
+        }
+        
+        .advanced-table .selected-cell {
+          background-color: #dbeafe !important;
+          position: relative;
+        }
+        
+        .advanced-table .selected-cell::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border: 2px solid #3b82f6;
+          pointer-events: none;
+        }
+        
+        .advanced-table th:hover .resize-handle {
+          opacity: 1 !important;
+          background-color: #3b82f6;
+        }
+        
+        .advanced-table tbody tr:hover {
+          background-color: #f8fafc;
+        }
+        
+        .table-actions button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+      </style>
+    `;
+    
+    // Insert styles if not already present
+    if (!document.querySelector('#advanced-table-styles')) {
+      const styleElement = document.createElement('div');
+      styleElement.id = 'advanced-table-styles';
+      styleElement.innerHTML = tableStyles;
+      document.head.appendChild(styleElement);
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div 
       style={containerStyle}
@@ -195,10 +345,11 @@ export function WordLikeLayout({
       <RibbonToolbar
         onCommand={handleRibbonCommand}
         onImageInsert={handleImageInsert}
+        onTableInsert={handleTableInsert}
       />
 
       {/* Main Editor Area */}
-      <div style={mainContentStyle}>
+      <div style={mainContentStyle} onContextMenu={handleContextMenu}>
         <EditorCanvas
           ref={editorCanvasRef}
           content={content}
@@ -207,6 +358,20 @@ export function WordLikeLayout({
           zoomLevel={zoomLevel}
           onSelectionChange={setCurrentSelection}
           placeholder="Start typing your document..."
+        />
+        <BubbleMenu
+          editorRef={editorCanvasRef}
+          onFormat={(command, value) => {
+            if (!editorCanvasRef.current) return;
+            editorCanvasRef.current.focus();
+            document.execCommand(command, false, value);
+          }}
+          activeFormats={new Set([...(currentSelection && !currentSelection.isCollapsed ? [
+            document.queryCommandState('bold') ? 'bold' : '',
+            document.queryCommandState('italic') ? 'italic' : '',
+            document.queryCommandState('underline') ? 'underline' : ''
+          ].filter(Boolean) : [])])}
+          isVisible={!!currentSelection && !currentSelection.isCollapsed && currentSelection.toString().trim().length > 0}
         />
       </div>
 
@@ -223,6 +388,20 @@ export function WordLikeLayout({
         collaborators={0}
         readabilityScore={readabilityScore}
       />
+
+      {/* Advanced Right-click Context Menu */}
+      {contextMenu.isVisible && (
+        <AdvancedContextMenu
+          isVisible={contextMenu.isVisible}
+          position={contextMenu.position}
+          onClose={hideContextMenu}
+          items={contextMenu.contextType === 'table' 
+            ? createTableContextMenu(getCurrentOperations() as any) 
+            : createEditorContextMenu(getCurrentOperations() as any)
+          }
+          context={contextMenu.contextType === 'table' ? 'table' : 'text'}
+        />
+      )}
     </div>
   );
 }

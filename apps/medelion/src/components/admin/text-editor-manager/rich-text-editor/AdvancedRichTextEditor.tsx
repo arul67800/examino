@@ -13,6 +13,8 @@ import {
   Paperclip, Zap, Layers, Grid3X3, RotateCw, Crop,
   Volume2, Play, Pause, SkipForward, SkipBack
 } from 'lucide-react';
+import { BubbleMenu } from './components/bubble-menu';
+import { TableContextMenu, EditorContextMenu, useContextMenu, useRightClickHandler } from './right-click-menu';
 
 // Types and Interfaces
 interface EditorContent {
@@ -136,6 +138,22 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
   const [isTableMenuOpen, setIsTableMenuOpen] = useState(false);
   const [isInsertMenuOpen, setIsInsertMenuOpen] = useState(false);
   
+  // Bubble Menu State
+  const [showBubbleMenu, setShowBubbleMenu] = useState(false);
+  
+  // Right-click Context Menu State
+  const { 
+    contextMenu, 
+    editorContextMenu, 
+    openContextMenu, 
+    openEditorContextMenu, 
+    closeContextMenu, 
+    closeEditorContextMenu 
+  } = useContextMenu(() => setShowBubbleMenu(false));
+  
+  // Use the right-click handler hook for document-level context menu handling
+  useRightClickHandler(editorRef, openContextMenu, openEditorContextMenu);
+  
   // Statistics
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
@@ -207,10 +225,37 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
     if (!editorRef.current) return;
     
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.rangeCount === 0) {
+      setShowBubbleMenu(false);
+      return;
+    }
     
     const range = selection.getRangeAt(0);
     setCurrentSelection(range);
+    
+    // Check if selection is inside a table
+    const isInTable = () => {
+      let element = range.commonAncestorContainer;
+      if (element.nodeType === Node.TEXT_NODE) {
+        element = element.parentElement as HTMLElement;
+      }
+      
+      let currentElement = element as HTMLElement;
+      while (currentElement && currentElement !== document.body) {
+        if (currentElement.tagName === 'TD' || currentElement.tagName === 'TH' || 
+            currentElement.tagName === 'TABLE' || currentElement.classList.contains('advanced-table')) {
+          return true;
+        }
+        currentElement = currentElement.parentElement as HTMLElement;
+        if (!currentElement) break;
+      }
+      return false;
+    };
+    
+    // Show bubble menu if there's text selected OR if we're in a table context
+    const hasTextSelected = !range.collapsed && range.toString().trim().length > 0;
+    const inTableContext = isInTable();
+    setShowBubbleMenu((hasTextSelected || inTableContext) && !readOnly);
     
     // Check for active formatting
     const formats = new Set<string>();
@@ -234,7 +279,7 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
     setCurrentFontSize(parseInt(computedStyle.fontSize));
     setCurrentTextColor(computedStyle.color);
     setCurrentBgColor(computedStyle.backgroundColor);
-  }, []);
+  }, [readOnly]);
 
   // Execute editor command
   const execCommand = useCallback((command: string, value?: string) => {
@@ -422,6 +467,23 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
   useEffect(() => {
     const handleSelectionChange = () => {
       updateActiveFormats();
+      
+      // Show bubble menu when selection is in a table
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        
+        // Check if selection is in a table
+        let element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container as Element;
+        while (element && element !== document.body) {
+          if (element.tagName === 'TABLE' || element.closest('table')) {
+            setShowBubbleMenu(true);
+            break;
+          }
+          element = element.parentElement;
+        }
+      }
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -536,6 +598,8 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
               className="flex-1 p-4 overflow-auto focus:outline-none"
               contentEditable={!readOnly}
               suppressContentEditableWarning
+              data-editor="true"
+              data-advanced-rich-text-editor="true"
               onInput={handleContentChange}
               onBlur={updateActiveFormats}
               style={{
@@ -616,6 +680,34 @@ export const AdvancedRichTextEditor = forwardRef<EditorRef, AdvancedRichTextEdit
           {enableVersioning && <span>v1.0</span>}
         </div>
       </div>
+
+      {/* Bubble Menu */}
+      <BubbleMenu
+        editorRef={editorRef}
+        onFormat={execCommand}
+        activeFormats={activeFormats}
+        isVisible={showBubbleMenu}
+        onClose={() => setShowBubbleMenu(false)}
+      />
+
+      {/* Right-click Context Menus */}
+      {contextMenu.isVisible && (
+        <TableContextMenu
+          isVisible={contextMenu.isVisible}
+          position={contextMenu.position}
+          onClose={closeContextMenu}
+          selectedCell={contextMenu.selectedCell}
+        />
+      )}
+
+      {editorContextMenu.isVisible && (
+        <EditorContextMenu
+          isVisible={editorContextMenu.isVisible}
+          position={editorContextMenu.position}
+          onClose={closeEditorContextMenu}
+          editorRef={editorRef}
+        />
+      )}
     </div>
   );
 });
